@@ -1,0 +1,65 @@
+# matrix/standard.yaml — 压缩完整档（~320 run，目标 ~3–4 小时）
+# 口径见 docs/MATRIX_TIERS.md §2。确诊档：中介链/归因/闭环全保留。
+# 物理下限 ~300 run：再低消融臂 <8 观测、heldout 名存实亡。
+name: standard
+description: "确诊档：主矩阵 + 渐进披露 + 逐条消融 + v2 闭环 + 模型梯度 + 跨厂商 + 通用性 + 埋针校准"
+
+main_matrix:
+  arms:
+    - { id: A0,  inject: none }        # 裸考基线
+    - { id: A0p, inject: placebo }     # 同域等长安慰剂（注意力效应对照）
+    - { id: A1,  inject: auto }        # 挂载 Skill，模型自主决定读不读
+    - { id: A1f, inject: forced }      # 强制注入全文（内容上限）
+  tasks: { source: tasks/generated, total: 12, split: { dev: 8, heldout: 4 } }
+  repeats: 2                            # = 96 run（dev+heldout 全量）
+
+a1_noref:                               # H3 渐进披露（仅被评 Skill 有引用文件时启用）
+  arms: [ { id: A1-noref, inject: forced_no_refs } ]
+  tasks: all_main                       # 12 × n=2 = 24 run
+  repeats: 2
+
+ablation:                               # 中介链①环：逐条指令消融
+  arms_from: manifest                   # A1-x1..xN 按 manifest.verify_tasks 展开
+  verify_tasks_per_instruction: 4
+  repeats: 2                            # 7 指令 × 4 × 2 ≈ 56 run（二元行为信号 n≈14 功效仍够）
+
+a2_loop:                                # 归因驱动的 v2 修订闭环
+  arms: [ { id: A2, inject: forced_v2 } ]
+  tasks: all_main                       # 12 × n=2 = 24 run
+  repeats: 2
+  heldout_final: true                   # heldout 只在此终验时开一次
+
+model_gradient:                         # H4：claude 三档 × A0/A1f
+  models: [glm-5.1, glm-5.2, glm-5.3]   # v6.5：claude 三档随 ENGINX 下线，改 dis 代际序列
+  arms: [ { id: A0, inject: none }, { id: A1f, inject: forced } ]
+  tasks: { dev_subset: 6 }
+  repeats: 2                            # 3×2×6×2 = 72 run
+  criterion: "三档点估计单调趋势 + 方向一致（每格 ~12 run，只作方向性证据）"
+
+codex_matrix:                           # 跨厂商稳健性
+  cli: codex
+  arms: [ { id: A0, inject: none }, { id: A1f, inject: forced } ]
+  tasks: { dev_subset: 6 }
+  repeats: 2                            # 24 run
+
+generality:                             # 第二 Skill 通用性验收（diagnose 等）
+  skills: [diagnose]
+  arms: [ { id: A0, inject: none }, { id: A1f, inject: forced } ]
+  tasks: { dev_subset: 8 }
+  repeats: 2                            # 32 run
+
+needle_calibration:                     # 埋针 Skill：归因器 ground truth 准确率
+  runs: 20
+
+model: deepseek-v4.1-flash             # 确诊档主模型（v6.5 dis 线；梯度见 model_gradient.yaml）
+timeout_min: 12                         # 掐 D3 长尾
+concurrency: 16                         # 待 B0 探活实测 429 边界后校准（上限 20）
+
+estimate:
+  total_runs: 322
+  minutes_per_run_avg: 7                # 超时掐尾后的均值估算
+  wall_clock_hours: 2.5                 # 16 并发；按 3–4h 预算含重试余量
+
+budget:
+  fuse_at_percent: 80                   # 超支 80% 触发熔断
+  cut_order: [process_judge, codex_matrix, model_gradient_to_2tiers, generality_reduce]

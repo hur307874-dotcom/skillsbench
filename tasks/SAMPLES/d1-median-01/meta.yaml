@@ -1,0 +1,8 @@
+task_id: d1-median-01
+difficulty: D1
+targets_fids: [F17]
+sites_required: 1
+forbidden_edits: [tests/, _tests/]
+prompt: |
+  用户报告：median([1, 3]) 期望 2.0 但实际返回 3（偶数长度时结果不对）。
+  奇数长度是对的。请修复。

@@ -1,0 +1,29 @@
+# matrix/quick-lite.yaml — 真·最简分诊档（12 run，目标 ~10–15 分钟）
+# 口径见 docs/MATRIX_TIERS.md §1.1。合法结论只有一种句式："值不值得花 3–4h 确诊"。
+# 红线：评测性结论不得低于 12 run；6 run 是 B1.5 冒烟规模，只查坑不评测。
+name: quick-lite
+description: "A0 vs A1f，6 任务（每难度 2）× n=1。序贯分诊的第一棒。"
+
+arms:
+  - id: A0
+    inject: none        # 排除 Skill（裸考基线，不可砍）
+  - id: A1f
+    inject: forced      # 强制注入 SKILL.md 全文（内容上限）
+
+tasks:
+  source: tasks/generated
+  per_difficulty: 2     # D1/D2/D3 各取 2 个（按 task_id 排序）；不足时告警并取现有
+repeats: 1
+
+model: deepseek-v4.1-flash  # dis 线主迭代模型（v6.5 起 ENGINX 下线，见 DECISION_LOG）
+timeout_min: 12
+concurrency: 10         # 待 B0 探活实测 429 边界后校准
+
+estimate:               # 估算值，待 3 实例纵切实测回校
+  minutes_per_run: { D1: 3.5, D2: 10, D3: 20 }
+  token_per_run:  { D1: 40000, D2: 150000, D3: 400000 }
+
+gate:                   # 序贯分诊决策规则（MATRIX_TIERS §1.1）
+  escalate_to_standard_if: "增益明显为正 OR 成本明显异常"
+  drop_if: "明显零增益 AND 成本正常"
+  topup_to_quick_if: "信号模糊（配对符号 3:3 之类）"

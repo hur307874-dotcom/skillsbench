@@ -1,0 +1,34 @@
+.venv/
+__pycache__/
+*.pyc
+results/
+node_modules/
+dist/
+traces.duckdb
+.env
+tasks/.build/
+.workbuddy/
+**/_tests/
+
+# 密钥（真 key 永不入库——公开仓库）
+backend/local_secrets.py
+
+# 题库主体（467MB 本地保留；样例见 tasks/SAMPLES/）
+tasks/pool-v2/
+tasks/pool-v3/
+tasks/pool-v2-mined/
+tasks/pool-v2-mined2/
+tasks/pool-v2-mined3/
+tasks/generated/
+tasks/mined-v2/
+tasks/heldout/
+tasks/heldout-7/
+tasks/heldout-v2/
+tasks/pilot2/
+tasks/probe-contam/
+.mine_cache/
+
+# 运行残留
+*.log
+validator_err.txt
+.DS_Store

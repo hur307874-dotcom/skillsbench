@@ -1,0 +1,11 @@
+name: probe-mined
+description: "真实挖掘池点火校准：10 抽样 × A0 × n=2"
+arms:
+  - { id: A0, inject: none }
+tasks:
+  source: tasks/pool-v2-mined
+  only: [moreitertools-combination_index-1080-24, moreitertools-exactly_n-1080-10-174020, moreitertools-groupby_transform-1080-172926, moreitertools-is_sorted-1080-19-173557, moreitertools-locate-1080-08-174020, moreitertools-nth_permutation-1080-21-174020, moreitertools-powerset_of_sets-1080-34-173557, moreitertools-replace-1080-12-174020, moreitertools-substrings-1080-01-173557, moreitertools-unique_in_window-1080-28-174020]
+repeats: 2
+model: deepseek-v4.1-flash
+timeout_min: 12
+concurrency: 4

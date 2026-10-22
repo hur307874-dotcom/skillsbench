@@ -1,0 +1,13 @@
+name: pilot-multi
+description: "复合 bug 池 Pilot Gate（A0/A1f-v1/A1f-v3 × 2 multi 任务 × n=3）"
+arms:
+  - { id: A0, inject: none }
+  - { id: A1f-v1, inject: forced, skill: skills/tdd-v1 }
+  - { id: A1f-v3, inject: forced, skill: skills/tdd-v3 }
+tasks:
+  source: tasks/pool-v2/forged-final
+  only: [forged-multi-sieve, forged-multi-dual]
+repeats: 3
+model: deepseek-v4.1-flash
+timeout_min: 12
+concurrency: 4

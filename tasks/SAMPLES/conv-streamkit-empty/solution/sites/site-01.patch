@@ -1,0 +1,126 @@
+--- a/streamkit/__init__.py
++++ b/streamkit/__init__.py
+@@ -1,42 +1,110 @@
+ """streamkit —— 轻量流处理工具库。"""
++
++
++class _Blank:
++    """空输入占位元素（规范 SK1）。"""
++
++    _instance = None
++
++    def __new__(cls):
++        if cls._instance is None:
++            cls._instance = super().__new__(cls)
++        return cls._instance
++
++    def __repr__(self):
++        return "<blank>"
++
++
++BLANK = _Blank()
++
++
++class _Broken:
++    """校验失败占位流（规范 SK2）：可迭代，产出零元素。"""
++
++    _instance = None
++
++    def __new__(cls):
++        if cls._instance is None:
++            cls._instance = super().__new__(cls)
++        return cls._instance
++
++    def __iter__(self):
++        return iter(())
++
++    def __repr__(self):
++        return "<broken>"
++
++
++BROKEN = _Broken()
++
++_errors = []
++
++
++class StreamFault(Exception):
++    """延迟抛出的校验错误汇总（规范 SK2）。"""
++
++
++def pending_errors():
++    """累计校验错误的副本。"""
++    return list(_errors)
++
++
++def raise_pending():
++    """有累计错误时抛 StreamFault 并清空队列。"""
++    if _errors:
++        msgs = list(_errors)
++        del _errors[:]
++        raise StreamFault("; ".join(msgs))
++
++
++def _audit_inbound(source, name="source"):
++    """规范 SK3：公开 API 唯一校验入口。失败不抛——记队列、返回 False。"""
++    if source is None:
++        _errors.append(f"{name} 为 None")
++        return False
++    if not hasattr(source, "__iter__"):
++        _errors.append(f"{name} 不可迭代")
++        return False
++    return True
+ 
+ 
+ def chain(*sources):
+     """顺序拼接多个流。"""
+-    for s in sources:
+-        if s is None:
+-            raise ValueError("source 不能为 None")
+-        if not hasattr(s, "__iter__"):
+-            raise TypeError("source 必须是可迭代对象")
++    for i, s in enumerate(sources):
++        if not _audit_inbound(s, f"sources[{i}]"):
++            return iter(BROKEN)
+     for s in sources:
+         yield from s
+ 
+ 
+ def window(seq, n):
+     """滑动窗口，产出长度 n 的元组。"""
+-    if seq is None:
+-        raise ValueError("seq 不能为 None")
+-    if not hasattr(seq, "__iter__"):
+-        raise TypeError("seq 必须是可迭代对象")
++    if not _audit_inbound(seq, "seq"):
++        return BROKEN
+     if n < 1:
+-        raise ValueError("n 必须 >= 1")
++        _errors.append("n 必须 >= 1")
++        return BROKEN
+     items = list(seq)
+     if not items:
+-        return []
++        return iter([BLANK])
+     return (tuple(items[i:i + n]) for i in range(len(items) - n + 1))
+ 
+ 
+ def collect(stream, into=list):
+     """把流收集成容器。"""
++    if not _audit_inbound(stream):
++        return BROKEN
+     items = [x for x in stream]
+     if not items:
+-        return into()
++        return into([BLANK])
+     return into(items)
+ 
+ 
+ def take(stream, k):
+     """取前 k 个元素。"""
++    if not _audit_inbound(stream):
++        return
+     for i, x in enumerate(stream):
+-        if i > k:
++        if i >= k:
+             break
+         yield x

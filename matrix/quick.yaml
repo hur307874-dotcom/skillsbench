@@ -1,0 +1,32 @@
+# matrix/quick.yaml — 快速分诊档（48 run，目标 ~40–60 分钟）
+# 口径见 docs/MATRIX_TIERS.md §1。回答"有没有用（方向）+ 代价（量级）"。
+name: quick
+description: "A0 vs A1f，12 任务（每难度 4）× n=2。序贯分诊的加码档。"
+
+arms:
+  - id: A0
+    inject: none
+  - id: A1f
+    inject: forced
+
+tasks:
+  source: tasks/generated
+  per_difficulty: 7     # v6.5：全量 18 任务（D1×4/D2×7/D3×7）
+repeats: 3               # v6.5：方差带信号需要 n≥3（pilot-hard 实测）
+
+model: deepseek-v4.1-flash  # dis 线主迭代模型（v6.5 起，见 DECISION_LOG）
+timeout_min: 12
+concurrency: 4    # dis 线实测：10 必触发 429 死跑
+
+estimate:
+  minutes_per_run: { D1: 3.5, D2: 10, D3: 20 }
+  token_per_run:  { D1: 40000, D2: 150000, D3: 400000 }
+
+reporting:              # 报告口径（MATRIX_TIERS §1，必须声明的缺失）
+  claims: "方向 + 逐任务符号（N 个任务中 A1f−A0 为正的个数）"
+  must_disclose:
+    - "无 A1 自主触发 → 收益为内容上限，真实收益 ≤ 此值"
+    - "无 A0p placebo → 无法排除注意力效应"
+    - "无 CI（n=2），不报显著性"
+extras:
+  behavior_signals: true   # 行为信号检测器照跑（纯函数、不花 run）

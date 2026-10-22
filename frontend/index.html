@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skill-Bench 评测台</title>
+<style>
+  :root {
+    --bg: #fafafa; --panel: #ffffff; --border: #e5e5e0; --border2: #d8d8d2;
+    --text: #1a1a18; --text2: #55554f; --text3: #8a8a82;
+    --blue: #1a73e8; --green: #1e8e3e; --red: #d93025; --amber: #b06000;
+    --blue-bg: #e8f0fe; --green-bg: #e6f4ea; --red-bg: #fce8e6; --amber-bg: #fef3e0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font: 14px/1.6 -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+         background: var(--bg); color: var(--text); }
+  header { background: var(--panel); border-bottom: 1px solid var(--border);
+           padding: 12px 24px; display: flex; align-items: center; gap: 16px; }
+  header h1 { font-size: 17px; font-weight: 600; }
+  header .sub { color: var(--text3); font-size: 12px; }
+  nav { background: var(--panel); border-bottom: 1px solid var(--border);
+        padding: 0 24px; display: flex; gap: 4px; }
+  nav button { background: none; border: none; padding: 10px 16px; font-size: 13px;
+               color: var(--text2); cursor: pointer; border-bottom: 2px solid transparent; }
+  nav button.active { color: var(--blue); border-bottom-color: var(--blue); font-weight: 600; }
+  main { padding: 20px 24px; max-width: 1280px; margin: 0 auto; }
+  .view { display: none; } .view.active { display: block; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+           gap: 12px; margin-bottom: 20px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+          padding: 14px 16px; }
+  .card .num { font-size: 26px; font-weight: 600; }
+  .card .lbl { color: var(--text3); font-size: 12px; margin-top: 2px; }
+  .concl { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+           padding: 12px 16px; margin-bottom: 8px; display: flex; gap: 12px; align-items: baseline; }
+  .concl .cid { font-weight: 700; color: var(--blue); min-width: 32px; }
+  .concl .str { margin-left: auto; color: var(--text3); font-size: 12px; white-space: nowrap; }
+  table { width: 100%; border-collapse: collapse; background: var(--panel);
+          border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border);
+           font-size: 13px; }
+  th { background: #f4f4f0; font-weight: 600; color: var(--text2); font-size: 12px; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f8f8f5; }
+  .cell-good { background: var(--green-bg); color: var(--green); font-weight: 600; }
+  .cell-mid { background: var(--amber-bg); color: var(--amber); font-weight: 600; }
+  .cell-bad { background: var(--red-bg); color: var(--red); font-weight: 600; }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11px;
+          background: var(--blue-bg); color: var(--blue); }
+  .pill.warn { background: var(--amber-bg); color: var(--amber); }
+  .pill.bad { background: var(--red-bg); color: var(--red); }
+  .taskcard { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+              padding: 14px 16px; margin-bottom: 10px; }
+  .taskcard h3 { font-size: 14px; margin-bottom: 6px; }
+  .taskcard .meta { color: var(--text2); font-size: 12px; display: flex; gap: 14px; flex-wrap: wrap; }
+  .taskcard .prompt { color: var(--text3); font-size: 12px; margin-top: 8px;
+                      border-top: 1px dashed var(--border); padding-top: 8px; }
+  .ver { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+         padding: 14px 16px; margin-bottom: 10px; }
+  .ver h3 { font-size: 14px; }
+  .ver .kv { color: var(--text2); font-size: 12px; margin: 4px 0; }
+  .ver pre { background: #f6f6f2; border-radius: 6px; padding: 10px; font-size: 11px;
+             overflow-x: auto; white-space: pre-wrap; color: var(--text2); margin-top: 8px; }
+  .muted { color: var(--text3); font-size: 12px; }
+  h2 { font-size: 15px; margin: 18px 0 10px; }
+  select { padding: 6px 10px; border: 1px solid var(--border2); border-radius: 6px;
+           background: var(--panel); font-size: 13px; }
+  #loading { color: var(--text3); padding: 40px; text-align: center; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Skill-Bench 评测台</h1>
+  <span class="sub">Agent Skill 效果审计与修订系统 · pool-v2.0 · runs.jsonl 实时</span>
+</header>
+<nav>
+  <button data-v="overview" class="active">总览</button>
+  <button data-v="matrix">矩阵</button>
+  <button data-v="tasks">任务池</button>
+  <button data-v="batches">批次</button>
+  <button data-v="attribution">归因</button>
+  <button data-v="channel">渠道健康</button>
+  <button data-v="versions">Skill 版本链</button>
+</nav>
+<main>
+  <div id="loading">加载中…</div>
+
+  <section id="v-overview" class="view active">
+    <div class="cards" id="ov-cards"></div>
+    <h2>核心结论（证据强度见右）</h2>
+    <div id="ov-concl"></div>
+  </section>
+
+  <section id="v-matrix" class="view">
+    <p class="muted" style="margin-bottom:10px">模型：
+      <select id="mx-model"></select>
+      <span style="margin-left:14px">单元格 = 通过率（均轮次）；色阶：≥0.9 绿 / 0.4–0.9 黄 / &lt;0.4 红</span>
+    </p>
+    <div id="mx-table"></div>
+  </section>
+
+  <section id="v-tasks" class="view">
+    <p class="muted" style="margin-bottom:10px" id="tk-pool"></p>
+    <div id="tk-list"></div>
+  </section>
+
+  <section id="v-batches" class="view">
+    <div id="bt-list"></div>
+    <div id="bt-detail" style="margin-top:16px"></div>
+  </section>
+
+  <section id="v-attribution" class="view">
+    <p class="muted" style="margin-bottom:10px">批次：
+      <select id="at-batch"></select>
+      <span style="margin-left:14px">机械检测器（零 LLM）· 证据行号随行 · κ 未过门前仅定性</span>
+    </p>
+    <div id="at-summary"></div>
+    <div id="at-records" style="margin-top:14px"></div>
+  </section>
+
+  <section id="v-channel" class="view">
+    <p class="muted" style="margin-bottom:10px">
+      渠道健康 = 批次中位 token 吞吐（tps）对照全库历史中位；低于 50% 判降级窗口，
+      该窗口内的完成率类结论须挂“渠道存疑”标签。</p>
+    <div id="ch-table"></div>
+  </section>
+
+  <section id="v-versions" class="view">
+    <div id="vv-list"></div>
+  </section>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+const api = async p => (await fetch(p)).json();
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+// ---- 导航 ----
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('nav button').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  $('#v-' + b.dataset.v).classList.add('active');
+});
+
+// ---- 总览 ----
+async function loadOverview() {
+  const d = await api('/api/overview');
+  $('#ov-cards').innerHTML = [
+    [d.total_runs, '总 run'], [d.ok_runs, '有效 run'], [d.dead_runs, '死跑（已剥除）'],
+    [d.error_runs, '错误/超时'], [d.batches, '批次'], [d.tasks, '任务'],
+  ].map(([n, l]) => `<div class="card"><div class="num">${n}</div><div class="lbl">${l}</div></div>`).join('');
+  $('#ov-concl').innerHTML = d.conclusions.map(c =>
+    `<div class="concl"><span class="cid">${c.id}</span><span>${esc(c.text)}</span>
+     <span class="str">${esc(c.strength)}</span></div>`).join('');
+}
+
+// ---- 矩阵 ----
+let mxCells = [];
+async function loadMatrix() {
+  const d = await api('/api/matrix');
+  mxCells = d.cells;
+  const models = [...new Set(mxCells.map(c => c.model))].sort();
+  $('#mx-model').innerHTML = models.map(m => `<option>${esc(m)}</option>`).join('');
+  $('#mx-model').value = models.includes('deepseek-v4.1-flash') ? 'deepseek-v4.1-flash' : models[0];
+  $('#mx-model').onchange = renderMatrix;
+  renderMatrix();
+}
+function renderMatrix() {
+  const m = $('#mx-model').value;
+  const cells = mxCells.filter(c => c.model === m);
+  const tasks = [...new Set(cells.map(c => c.task_id))].sort();
+  const arms = [...new Set(cells.map(c => c.arm))].sort();
+  const find = (t, a) => cells.find(c => c.task_id === t && c.arm === a);
+  const cls = p => p == null ? '' : p >= 0.9 ? 'cell-good' : p >= 0.4 ? 'cell-mid' : 'cell-bad';
+  $('#mx-table').innerHTML = `<table><tr><th>任务</th>${arms.map(a => `<th>${esc(a)}</th>`).join('')}</tr>` +
+    tasks.map(t => `<tr><td>${esc(t)}</td>` + arms.map(a => {
+      const c = find(t, a);
+      if (!c) return '<td class="muted">—</td>';
+      const tps = c.avg_tps != null ? ` <span class="muted">${c.avg_tps}tps</span>` : '';
+      return `<td class="${cls(c.pass_rate)}" title="n=${c.n} 死跑=${c.dead} 错误=${c.error}${c.avg_score != null ? ' 均分=' + c.avg_score : ''}">` +
+             `${(c.pass_rate * 100).toFixed(0)}%${c.avg_turns != null ? `（${c.avg_turns}t）` : ''}${tps}</td>`;
+    }).join('') + '</tr>').join('') + '</table>';
+}
+
+// ---- 任务池 ----
+async function loadTasks() {
+  const d = await api('/api/tasks');
+  $('#tk-pool').textContent = d.pool;
+  $('#tk-list').innerHTML = d.tasks.map(t => {
+    const role = t.baseline?.role || '未标角色';
+    const rate = t.baseline?.['deepseek-v4.1-flash-A0'];
+    const roleCls = role.includes('带内') ? 'pill' : role.includes('地板') ? 'pill bad' : 'pill warn';
+    return `<div class="taskcard"><h3>${esc(t.task_id)}
+      <span class="${roleCls}" style="margin-left:8px">${esc(role)}</span></h3>
+      <div class="meta">
+        <span>难度 ${esc(t.difficulty || '-')}</span>
+        <span>时程 ${t.horizon_minutes ?? '-'} min</span>
+        <span>F-ID ${esc((t.targets_fids || []).join(', ') || '-')}</span>
+        <span>应改点 ${t.sites_required ?? '-'}</span>
+        <span>A0 基线 ${rate ?? '-'}</span>
+        <span>${t.has_p2p ? '✅ P2P' : '⚠️ 无 P2P'}｜${t.has_wrong ? '✅ 错解' : '⚠️ 无错解'}</span>
+      </div>
+      <div class="prompt">${esc(t.prompt)}</div></div>`;
+  }).join('');
+}
+
+// ---- 批次 ----
+async function loadBatches() {
+  const d = await api('/api/batches');
+  $('#bt-list').innerHTML = `<table><tr><th>批次</th><th>模型</th><th>run</th><th>满分</th>
+    <th>死跑</th><th>错误</th><th>均分</th><th>任务数</th></tr>` +
+    d.batches.map(b => `<tr style="cursor:pointer" onclick="loadBatch('${esc(b.batch)}')">
+      <td>${esc(b.batch)}</td><td class="muted">${esc(b.models.join('/') || '-')}</td>
+      <td>${b.n}</td><td class="cell-good">${b.pass}</td>
+      <td>${b.dead ? `<span class="pill warn">${b.dead}</span>` : 0}</td>
+      <td>${b.error ? `<span class="pill bad">${b.error}</span>` : 0}</td>
+      <td>${b.avg_score ?? '—'}</td><td>${b.tasks}</td></tr>`).join('') + '</table>';
+}
+async function loadBatch(id) {
+  const d = await api('/api/batches/' + encodeURIComponent(id));
+  $('#bt-detail').innerHTML = `<h2>批次 ${esc(id)}（${d.runs.length} run）</h2>
+    <table><tr><th>run</th><th>任务</th><th>臂</th><th>rep</th><th>分</th><th>tests</th>
+    <th>轮</th><th>墙钟</th><th>状态</th></tr>` +
+    d.runs.map(r => `<tr><td class="muted">${esc(r.run_id)}</td><td>${esc(r.task_id)}</td>
+      <td>${esc(r.arm)}</td><td>${r.rep}</td>
+      <td class="${r.status === 'ok' ? (r.score === 1 ? 'cell-good' : 'cell-mid') : ''}">${r.score ?? '—'}</td>
+      <td class="muted">${esc(r.tests || '')}</td><td>${r.num_turns ?? '—'}</td>
+      <td class="muted">${r.wall_s ?? '—'}s</td>
+      <td>${r.status === 'ok' ? '<span class="pill">ok</span>'
+          : r.status === 'dead' ? '<span class="pill warn">死跑</span>'
+          : '<span class="pill bad">错误</span>'}</td></tr>`).join('') + '</table>';
+}
+
+// ---- Skill 版本链 ----
+async function loadVersions() {
+  const d = await api('/api/skill-versions');
+  $('#vv-list').innerHTML = d.versions.map(v =>
+    `<div class="ver"><h3>${esc(v.version)}
+      ${v.sha256 ? `<span class="muted" style="font-size:11px;margin-left:8px">sha256:${esc(v.sha256.slice(0, 12))}…</span>` : ''}</h3>
+      <div class="kv">SKILL.md ${v.lines ?? '?'} 行｜manifest ${v.has_manifest ? '✅' : '—'}</div>
+      ${v.revision ? `<pre>${esc(v.revision)}</pre>` : '<p class="muted">（v1 为冻结原版，无修订记录）</p>'}
+    </div>`).join('');
+}
+
+// ---- 归因 ----
+async function loadAttribution() {
+  const bt = await api('/api/batches');
+  const opts = bt.batches.map(b => b.batch).reverse();
+  $('#at-batch').innerHTML = opts.map(b => `<option>${esc(b)}</option>`).join('');
+  $('#at-batch').onchange = () => renderAttribution($('#at-batch').value);
+  await renderAttribution(opts[0]);
+}
+async function renderAttribution(batch) {
+  const d = await api('/api/attribution?batch=' + encodeURIComponent(batch));
+  const agg = d.aggregate;
+  $('#at-summary').innerHTML = `<div class="cards">
+    <div class="card"><div class="num">${agg.total_runs}</div><div class="lbl">run 总数</div></div>
+    <div class="card"><div class="num">${agg.runs_with_hits}</div><div class="lbl">有归因命中</div></div>
+    ${Object.entries(agg.f_id_freq || {}).map(([f, c]) =>
+      `<div class="card"><div class="num">${c.high + c.medium_low}</div>
+       <div class="lbl">${esc(f)}（high ${c.high}）</div></div>`).join('')}
+  </div>`;
+  const hit = d.records.filter(r => r.hits.length).slice(0, 15);
+  $('#at-records').innerHTML = hit.length ? `<table>
+    <tr><th>run</th><th>F-ID</th><th>置信</th><th>证据</th><th>说明</th></tr>` +
+    hit.flatMap(r => r.hits.map(h => `<tr><td class="muted">${esc(r.run_id)}</td>
+      <td><span class="pill">${esc(h.f_id)}</span></td><td>${esc(h.confidence)}</td>
+      <td class="muted">${(h.evidence_idx || []).join(',')}</td>
+      <td class="muted">${esc(h.note)}</td></tr>`)).join('') + '</table>'
+    : '<p class="muted">本批次无归因命中（全满分或证据不足）</p>';
+}
+
+// ---- 渠道健康 ----
+async function loadChannel() {
+  const bt = await api('/api/batches');
+  const rows = [];
+  for (const b of bt.batches.slice(-14).reverse()) {
+    let h = null;
+    try { h = await api('/api/gate/health?batch=' + encodeURIComponent(b.batch)); }
+    catch (e) { h = null; }
+    rows.push({ b, h });
+  }
+  $('#ch-table').innerHTML = `<table><tr><th>批次</th><th>中位 tps</th>
+    <th>历史中位</th><th>判定</th></tr>` +
+    rows.map(({ b, h }) => {
+      if (!h) return `<tr><td>${esc(b.batch)}</td><td colspan="3" class="muted">—</td></tr>`;
+      const bad = h.degraded;
+      const med = h.batch_median_tps != null ? h.batch_median_tps.toFixed(1) : '—';
+      const hist = h.historical_median_tps != null ? h.historical_median_tps.toFixed(1) : '—';
+      return `<tr><td>${esc(b.batch)}</td>
+        <td class="${bad ? 'cell-bad' : 'cell-good'}">${med}</td>
+        <td class="muted">${hist}</td>
+        <td>${bad ? '<span class="pill bad">降级窗口</span>' : '<span class="pill">健康</span>'}</td></tr>`;
+    }).join('') + '</table>';
+}
+
+// ---- 启动 ----
+(async () => {
+  $('#loading').remove();
+  await Promise.all([loadOverview(), loadMatrix(), loadTasks(), loadBatches(),
+                     loadAttribution(), loadChannel(), loadVersions()]);
+})();
+</script>
+</body>
+</html>

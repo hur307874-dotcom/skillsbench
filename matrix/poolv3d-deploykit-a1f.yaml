@@ -1,0 +1,11 @@
+name: poolv3d-deploykit-a1f
+description: "pool-v3 正式版 v3.4：deploykit 族 A1f-conv 臂 n=5（臂间隔离批次）"
+arms:
+  - { id: A1f-conv, inject: forced, skill: D:/ai_project/skillbench-v3-secure/skills/deploykit-spec }
+tasks:
+  source: tasks/pool-v3
+  only: [conv-deploykit-pipeline]
+repeats: 5
+model: deepseek-v4.1-flash
+timeout_min: 12
+concurrency: 4

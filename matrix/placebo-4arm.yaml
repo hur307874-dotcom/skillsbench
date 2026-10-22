@@ -1,0 +1,14 @@
+name: placebo-4arm
+description: "长度/内容效应分离：A0/A0p(placebo)/A1f-v1/A1f-v3 × 4 multi 任务 × n=3 = 48 run"
+arms:
+  - { id: A0, inject: none }
+  - { id: A0p, inject: forced, skill: skills/placebo-cooking }
+  - { id: A1f-v1, inject: forced, skill: skills/tdd-v1 }
+  - { id: A1f-v3, inject: forced, skill: skills/tdd-v3 }
+tasks:
+  source: tasks/pool-v2/forged-final
+  only: [forged-multi-sieve, forged-multi-dual, forged-multi-crossfile, forged-multi-taketail]
+repeats: 3
+model: deepseek-v4.1-flash
+timeout_min: 12
+concurrency: 4

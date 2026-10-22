@@ -1,0 +1,11 @@
+name: smoke-sf
+description: "硅基流动通道冒烟：1 题 × A0 × n=1"
+arms:
+  - { id: A0, inject: none }
+tasks:
+  source: tasks/generated
+  only: [d1-median-01]
+repeats: 1
+model: deepseek-v4.1-flash
+timeout_min: 12
+concurrency: 1

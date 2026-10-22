@@ -1,0 +1,10 @@
+name: probe-enumhard
+arms:
+  - { id: A0, inject: none }
+tasks:
+  source: tasks/pilot2
+  only: [d2-enum-hard]
+repeats: 2
+model: deepseek-v4.1-flash
+timeout_min: 12
+concurrency: 2

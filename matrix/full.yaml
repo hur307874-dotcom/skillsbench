@@ -1,0 +1,59 @@
+# matrix/full.yaml — 原版完整档（~700 run，过夜）
+# 即 PLAN §7 原版预算。仅在 standard 档结论需要加厚（heldout 8 全量、
+# 梯度每格 16 run、消融 n=3）且时间/预算有余粮时补跑。
+name: full
+description: "PLAN §7 原版：24 任务 × n=3，证据加厚档"
+
+main_matrix:
+  arms:
+    - { id: A0,  inject: none }
+    - { id: A0p, inject: placebo }
+    - { id: A1,  inject: auto }
+    - { id: A1f, inject: forced }
+  tasks: { source: tasks/generated, total: 24, split: { dev: 16, heldout: 8 } }
+  repeats: 3                            # 4 × 24 × 3 = 288 run
+
+a1_noref:
+  arms: [ { id: A1-noref, inject: forced_no_refs } ]
+  tasks: all_main
+  repeats: 3                            # 72 run
+
+ablation:
+  arms_from: manifest
+  verify_tasks_per_instruction: 5
+  repeats: 3                            # 7 × 5 × 3 = 105 run
+
+a2_loop:
+  arms: [ { id: A2, inject: forced_v2 } ]
+  tasks: all_main
+  repeats: 3                            # 72 run
+  heldout_final: true
+
+model_gradient:
+  models: [haiku, sonnet, opus]
+  arms: [ { id: A0, inject: none }, { id: A1f, inject: forced } ]
+  tasks: { dev_subset: 8 }
+  repeats: 2                            # 96 run（每格 16 run）
+
+codex_matrix:
+  cli: codex
+  arms: [ { id: A0, inject: none }, { id: A1f, inject: forced } ]
+  tasks: { dev_subset: 6 }
+  repeats: 2                            # 24 run
+
+generality:
+  skills: [diagnose]
+  arms: [ { id: A0, inject: none }, { id: A1f, inject: forced } ]
+  tasks: { dev_subset: 10 }
+  repeats: 2                            # 40 run
+
+needle_calibration:
+  runs: 20
+
+model: sonnet
+timeout_min: 20
+concurrency: 16
+
+estimate:
+  total_runs: 717
+  wall_clock_hours: 8                   # 过夜档；8–12h 含重试余量

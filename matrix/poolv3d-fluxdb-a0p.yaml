@@ -1,0 +1,11 @@
+name: poolv3d-fluxdb-a0p
+description: "pool-v3 正式版 v3.4：fluxdb 族 A0p 臂 n=5（臂间隔离批次）"
+arms:
+  - { id: A0p, inject: forced, skill: D:/ai_project/skillbench-v3-secure/skills/placebo-cooking }
+tasks:
+  source: tasks/pool-v3
+  only: [conv-fluxdb-semantics]
+repeats: 5
+model: deepseek-v4.1-flash
+timeout_min: 12
+concurrency: 4

@@ -1,0 +1,21 @@
+# matrix/ablation-glm52.yaml — 关键消融：I3 vs I8 祸首判定（2026-09-29）
+# 背景：gradient-glm-5.2 A1f 6/10，失败 trace 全部停在"第一步—RED"。
+# manifest 后补登记 I8（L62-88 RED-first 仪式）。本矩阵判定祸首：
+#   x3（去反水平切片段）恢复 → I3 祸首；x8（去 RED-first 仪式）恢复 → I8 祸首；
+#   x1（去确认指令）作对照（预期无关）。对照组复用 gradient-glm-5.2 的 A0/A1f。
+name: ablation-glm52
+description: "glm-5.2 × A1-x1/x3/x8 × 6 任务 × n=2 = 36 run（I3 vs I8 判定）"
+
+arms:
+  - { id: A1-x1, inject: forced, skill: skills/ablation/I1 }
+  - { id: A1-x3, inject: forced, skill: skills/ablation/I3 }
+  - { id: A1-x8, inject: forced, skill: skills/ablation/I8 }
+
+tasks:
+  source: tasks/generated
+  per_difficulty: 2     # 与 gradient 批同一任务集（D1/D2/D3 各 2）
+repeats: 2
+
+model: glm-5.2
+timeout_min: 12
+concurrency: 4         # dis 线 429 上限

@@ -1,0 +1,11 @@
+name: probe-contam
+description: "N1 污染探针：扰动变体 A0 对照"
+arms:
+  - { id: A0, inject: none }
+tasks:
+  source: tasks/probe-contam
+  only: [d3-state-hard-p, d2-config-hard-p]
+repeats: 2
+model: deepseek-v4.1-flash
+timeout_min: 12
+concurrency: 4

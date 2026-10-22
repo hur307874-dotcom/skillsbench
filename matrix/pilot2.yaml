@@ -1,0 +1,19 @@
+# matrix/pilot2.yaml — B1 纠偏复测：加料版 pilot × 裸 haiku × n=10
+name: pilot-gate-2
+description: "d2-enum-hard + d3-state-hard 复测（B1 首轮 D2/D3 满分后加料）"
+
+arms:
+  - id: A0
+    inject: none
+
+tasks:
+  source: tasks/pilot2
+repeats: 10
+
+model: haiku
+timeout_min: 12
+concurrency: 5
+
+gate:
+  d2_target: "40-80%"
+  d3_target: "<40%"

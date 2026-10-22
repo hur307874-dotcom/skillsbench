@@ -1,0 +1,8 @@
+task_id: mined2-exactly_n-1080
+difficulty: D3
+sites_required: 1
+forbidden_edits: [tests/, _tests/]
+prompt: |
+  more_itertools 包的 `exactly_n` 功能在某些输入上行为不符合预期
+  （维护者收到的回归报告）。请复现问题、定位根因并修复，
+  保持包内其他 API 行为不变。

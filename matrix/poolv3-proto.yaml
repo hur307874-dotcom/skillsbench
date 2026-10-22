@@ -1,0 +1,12 @@
+name: poolv3-proto
+description: "pool-v3 原型试点：A0/A0p/A1f-skill（约定文档）× conv-streamkit-empty × n=3 = 9 run"
+arms:
+  - { id: A0, inject: none }
+  - { id: A0p, inject: forced, skill: skills/placebo-cooking }
+  - { id: A1f-conv, inject: forced, skill: skills/streamkit-convention }
+tasks:
+  source: tasks/pool-v3
+repeats: 3
+model: deepseek-v4.1-flash
+timeout_min: 12
+concurrency: 4

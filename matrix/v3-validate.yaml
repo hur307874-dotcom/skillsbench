@@ -1,0 +1,15 @@
+# matrix/v2-validate.yaml — A2 验证批：tdd-v2 复活 + 无回归（预登记标准见 skills/tdd-v3/REVISION.md）
+name: v2-validate
+description: "tdd-v2 × 6 任务 × n=2 = 12 run/模型（glm-5.2 复活 / deepseek-flash 无回归）"
+
+arms:
+  - { id: A1f-v2, inject: forced, skill: skills/tdd-v3 }
+
+tasks:
+  source: tasks/generated
+  per_difficulty: 2     # 与 gradient/ablation 同一任务集
+repeats: 2
+
+model: glm-5.2          # 复活验证主战场；无回归批命令行换 --model 默认（deepseek-flash）
+timeout_min: 12
+concurrency: 4

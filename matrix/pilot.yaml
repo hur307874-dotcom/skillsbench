@@ -1,0 +1,23 @@
+# matrix/pilot.yaml — B1 Pilot Gate：每档 1 个 pilot 任务 × 裸模型（A0）× n=10
+# 目的：定 baseline 水位。目标区间：D1 >80% / D2 40–80% / D3 <40%。
+# 任一档偏离目标 → 调难度参数后重测，通过才允许进 B1.5 冒烟。
+name: pilot-gate
+description: "A0 裸考基线水位测量（haiku），每档 1 任务 × n=10，共 30 run"
+
+arms:
+  - id: A0
+    inject: none        # 裸考基线（Pilot Gate 只测无 Skill）
+
+tasks:
+  source: tasks/generated
+  per_difficulty: 1     # 每档按 task_id 排序取第 1 个
+repeats: 10
+
+model: haiku            # 经 runner 短名映射为 claude-haiku-4-5-20251001
+timeout_min: 12
+concurrency: 5          # 中转站并发边界未知，保守取 5
+
+gate:
+  d1_target: ">80%"
+  d2_target: "40-80%"
+  d3_target: "<40%"

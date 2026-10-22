@@ -1,0 +1,13 @@
+name: pilot-multi2
+description: "复合池扩编三任务 pilot（A0/A1f-v1/A1f-v3 × taketail/crossfile/triple × n=3 = 27 run）"
+arms:
+  - { id: A0, inject: none }
+  - { id: A1f-v1, inject: forced, skill: skills/tdd-v1 }
+  - { id: A1f-v3, inject: forced, skill: skills/tdd-v3 }
+tasks:
+  source: tasks/pool-v2/forged-final
+  only: [forged-multi-taketail, forged-multi-crossfile, forged-multi-triple]
+repeats: 3
+model: deepseek-v4.1-flash
+timeout_min: 12
+concurrency: 4

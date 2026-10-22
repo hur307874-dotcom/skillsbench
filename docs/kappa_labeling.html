@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>κ 校准标注 — 归因器采信门</title>
+<style>
+  :root { --accent:#2563eb; --ok:#16a34a; --no:#dc2626; --bg:#f8fafc; --card:#ffffff; --line:#e2e8f0; }
+  * { box-sizing: border-box; }
+  body { font-family: "Microsoft YaHei", "Segoe UI", sans-serif; background: var(--bg); color:#1e293b; margin:0; }
+  header { position:sticky; top:0; background:var(--card); border-bottom:1px solid var(--line); padding:10px 20px; z-index:10; }
+  header h1 { font-size:16px; margin:0 0 6px; }
+  .bar { height:8px; background:#e2e8f0; border-radius:4px; overflow:hidden; }
+  .bar > div { height:100%; background:var(--accent); width:0%; transition:width .2s; }
+  .stats { display:flex; gap:16px; font-size:13px; margin-top:6px; flex-wrap:wrap; }
+  .stats b { font-variant-numeric: tabular-nums; }
+  .kappa { font-weight:700; }
+  .kappa.pass { color:var(--ok); } .kappa.fail { color:var(--no); }
+  main { max-width:860px; margin:18px auto 120px; padding:0 16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px 18px; margin-bottom:16px; }
+  .card h2 { font-size:14px; margin:0 0 8px; color:#0f172a; }
+  .meta { font-size:12px; color:#64748b; margin-bottom:8px; }
+  .verdict { display:inline-block; background:#eff6ff; color:#1d4ed8; font-weight:700; font-size:13px; padding:2px 10px; border-radius:6px; margin-bottom:8px; }
+  .evidence { background:#f1f5f9; border-radius:6px; padding:8px 10px; font-family:Consolas,monospace; font-size:12px; line-height:1.7; white-space:pre-wrap; word-break:break-all; margin-bottom:8px; }
+  .tracepath { font-size:11px; color:#94a3b8; margin-bottom:10px; word-break:break-all; }
+  .actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  button { cursor:pointer; border-radius:8px; border:1px solid var(--line); padding:7px 18px; font-size:13px; background:#fff; }
+  button.agree { border-color:var(--ok); color:var(--ok); font-weight:700; }
+  button.agree.sel { background:var(--ok); color:#fff; }
+  button.disagree { border-color:var(--no); color:var(--no); font-weight:700; }
+  button.disagree.sel { background:var(--no); color:#fff; }
+  select, input.note { font-size:13px; padding:6px 8px; border:1px solid var(--line); border-radius:6px; }
+  .corr { display:none; margin-top:10px; gap:8px; align-items:center; flex-wrap:wrap; }
+  .corr.show { display:flex; }
+  .stamp { font-size:12px; color:var(--ok); margin-left:auto; }
+  .toolbar { position:fixed; bottom:0; left:0; right:0; background:var(--card); border-top:1px solid var(--line); padding:10px 20px; display:flex; gap:10px; align-items:center; }
+  .toolbar button { font-size:13px; }
+  .jump { font-size:12px; color:#64748b; }
+  .jump a { color:var(--accent); text-decoration:none; margin-right:6px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>κ 校准标注 — 给“机器阅卷老师”做上岗考试（20 张卷宗）</h1>
+  <details style="font-size:13px;line-height:1.8;margin:6px 0" open>
+    <summary style="cursor:pointer;font-weight:700">📖 看不懂？点我（30 秒入门）</summary>
+    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;margin-top:6px">
+      <b>这是在干嘛？</b>我们有个程序叫“归因器”，它会自动看 AI 修 bug 的录像，判断“这次是哪种毛病”。<b>但它判得准不准，不能盲信。</b>所以抽了 20 个案例，机器已经给了结论，请你当人工裁判复核——你和机器足够一致（κ≥0.7），以后它大批量自动判的结果才能直接采信。<br>
+      <b>每张卡怎么看？</b>每张卡 = 一次 AI 干活的“卷宗”：① 任务名和得分（1.0=全对，0.0=失败，error=根本没跑起来）；② <b>检测器结论</b> = 机器的判断（F 开头编号是“失效模式”，<b>无罪 = 机器认为没毛病</b>）；③ 证据摘要 = AI 干活过程的几行节选。<br>
+      <b>卡片里的黑话</b>：“臂”= 实验条件（A0=没给说明书裸考，A0p=给了无关说明书当安慰剂，A1f=强制给了真说明书，v1/v3=说明书版本号）——判断时不用管臂，只看证据和结论对不对得上。<br>
+      <b>你要做什么？</b>看证据，觉得机器说得<b>有道理就点“同意”</b>；觉得<b>胡说就点“不同意”</b>，再选你认为的正确答案。拿不准的卡，把卡片编号发给我，我帮你一起看。<br>
+      <b>蓝色框是什么？</b>每张卡下面的蓝框是 <b>AI 建议 + 理由</b>——认同就点“按建议标记”一键完成（之后仍可改），不认同就手动选你的判断，尤其卡 1/2/4/17 建议看一眼理由再点。注意：用了建议就属于“复核式标注”，κ 会略微偏乐观，报告里会如实记载标注方式。<br>
+      <b>示范（卡片 3）</b>：证据只有一行“Failed to authenticate. API Error: 403”（API 配额没了，AI 根本没开始干活），机器却判“F05 漏改同模式调用点”——根本没改代码，哪来的漏改？明显判错 → 点<b>不同意</b>，选“无罪”。<br>
+      <b>F 编号速查</b>：F01 没复现就动手改 ｜ F03 没测试就宣布完成 ｜ F05 漏改同模式调用点 ｜ F07 改测试迎合实现 ｜ F09 用错 API ｜ F11 反复跑同一命令 ｜ F13 过度修改 ｜ F15 空等用户确认 ｜ F16 一次性写完全部测试 ｜ F17 治标不治本 ｜ F19 反复读不存在的文件 ｜ <b>无罪 = 没有失效模式</b>
+    </div>
+  </details>
+  <div class="bar"><div id="barfill"></div></div>
+  <div class="stats">
+    <span>已标 <b id="done">0</b>/20</span>
+    <span>同意 <b id="agreeN">0</b> ｜ 不同意 <b id="disagreeN">0</b></span>
+    <span class="kappa" id="kappa">κ = —（标完 20 卡后有效）</span>
+    <span class="jump" id="jump"></span>
+  </div>
+</header>
+<main id="list"></main>
+<div class="toolbar">
+  <button onclick="exportJSON()">导出标注 JSON</button>
+  <button onclick="importJSON()">导入（续标）</button>
+  <button onclick="if(confirm('清空全部标注？')){localStorage.removeItem(K);location.reload()}">清空</button>
+  <span style="font-size:12px;color:#64748b">标注实时存 localStorage；标完后导出 JSON 发我，我来归档并写 κ 结论。</span>
+</div>
+<script>
+const FIDS = ["无罪","F01","F03","F05","F07","F09","F11","F13","F15","F16","F17","F19"];
+const FID_DESC = {F01:"未复现就动手改",F03:"不跑测试就宣布完成",F05:"漏改同模式调用点",F07:"改测试代替改实现",F09:"用错 API 签名",F11:"过度验证",F13:"过度修改",F15:"等待不存在的用户",F16:"批量造测试",F17:"误读报错治症状",F19:"空转查找不存在文件"};
+const CARDS = [
+ {id:1, run:"d3-mutable-01-A1f-v1-r02", batch:"heldout-final", task:"d3-mutable-01", arm:"A1f-v1", score:"1.0（2/2）", v:"F16", ev:["#1 说: I'll start by exploring the repository structure to understand the codebase.","#2 工具 bash: cd results/heldout-final/work/d3-mutabl…","#3/#4 工具 read: …d3-mutable-01-A1f…","#5 工具 bash: …","#6 说: Let me reproduce the bug:"]},
+ {id:2, run:"forged-multi-sieve-A0-r01", batch:"placebo-4arm", task:"forged-multi-sieve", arm:"A0", score:"0.2（f2p:2/10,p2p:11/11）", v:"F05", ev:["#1 find . -type f | head -100","#2 grep -n \"def sieve\" -A 30 more_itertools/recipes.py","#3 grep -n \"def iter_index\" -A 25 …","#4/#5 cd …placebo-4arm/work/for…"]},
+ {id:3, run:"d2-sig-01-A0-r08", batch:"b1-pilot2", task:"d2-sig-01", arm:"A0", score:"0.0（error）", v:"F05", ev:["#1 说: Failed to authenticate. API Error: 403 user quota is not enough"]},
+ {id:4, run:"d2-config-hard-A1f-r02", batch:"gradient-glm-5.2", task:"d2-config-hard", arm:"A1f", score:"0.0（0/5）", v:"F05", ev:["（无证据摘要）"]},
+ {id:5, run:"d2-sig-01-A0-r04", batch:"b1-pilot2", task:"d2-sig-01", arm:"A0", score:"0.0（error）", v:"F05", ev:["#1 说: Failed to authenticate. API Error: 403 chat pre-consumed quota failed"]},
+ {id:6, run:"forged-multi-sieve-A0p-r03", batch:"placebo-4arm", task:"forged-multi-sieve", arm:"A0p", score:"0.5（f2p:3/6,p2p:11/11）", v:"F05", ev:["#1~#6 工具 bash/read: cd …placebo-4arm/work/forged-multi-sieve…"]},
+ {id:7, run:"d2-rename-01-A0-r03", batch:"b1-pilot2", task:"d2-rename-01", arm:"A0", score:"0.0（error）", v:"F05", ev:["#1 说: Failed to authenticate. API Error: 403 chat pre-consumed quota failed"]},
+ {id:8, run:"d2-rename-01-A0-r09", batch:"b1-pilot2", task:"d2-rename-01", arm:"A0", score:"0.0（error）", v:"F05", ev:["#1 说: Failed to authenticate. API Error: 403 chat pre-consumed quota failed"]},
+ {id:9, run:"d1-typo-01-A0-r01", batch:"b1-pilot2", task:"d1-typo-01", arm:"A0", score:"1.0（2/2）", v:"无罪", ev:["#1 说: 我来查看 calc.py 找出 average 函数的问题","#2 Read calc.py","#3 说: 发现问题！第3行分母是 len(nums)-1，应为 len(nums)","#4 Edit","#5 说: 修复完成。-1 被移除"]},
+ {id:10, run:"forged-cachedrop-sieve-A1f-v3-r01", batch:"forged-glm52", task:"forged-cachedrop-sieve", arm:"A1f-v3", score:"0.25（f2p:2/8,p2p:11/11）", v:"无罪", ev:["#1 说: 我来查找并检查相关代码","#2~#4 bash cd …","#5 read more_itertools/recipes.py offset 950","#6 说: 找到了。sieve 的合数标记被 pass 和 # BUG 注释替换…"]},
+ {id:11, run:"h-d1-initials-01-A0-r01", batch:"heldout-final-2", task:"h-d1-initials-01", arm:"A0", score:"1.0（3/3）", v:"无罪", ev:["#1 bash cd …","#2/#3 read","#4 edit","#5 bash","#6 说: 修复完成。p[1] 取第二个字母，改为 p[0] 取首字母"]},
+ {id:12, run:"forged-multi-sieve-A1f-v1-r01", batch:"pool-v20-main", task:"forged-multi-sieve", arm:"A1f-v1", score:"1.0（f2p:5/5,p2p:11/11）", v:"无罪", ev:["#1 说: I'll investigate the sieve implementation","#2 bash cd …","#3 read","#4/#5 bash","#6 说: The bug is clear: never crosses out composite multiples…"]},
+ {id:13, run:"d3-mutable-01-A0-r03", batch:"b1-pilot2", task:"d3-mutable-01", arm:"A0", score:"0.0（error）", v:"无罪", ev:["#1 说: Failed to authenticate. API Error: 403 chat pre-consumed quota failed"]},
+ {id:14, run:"d1-median-01-A0-r02", batch:"b1-pilot2", task:"d1-median-01", arm:"A0", score:"1.0（3/3）", v:"无罪", ev:["#1 说: 我来找到 median 函数并修复","#2 Grep def median","#3 Read","#4 说: 偶数长度应取中间两数平均值，现在只返回右边的数","#5 Edit","#6 说: 完成！median([1,3]) 返回 2.0 ✓"]},
+ {id:15, run:"d1-median-01-A1f-r01", batch:"glm-probe-glm-5.2", task:"d1-median-01", arm:"A1f", score:"1.0（3/3）", v:"无罪", ev:["#1 ls -la","#2 read stats.py","#3 read README.md","#4 说: stats.py 直接返回 s[len(s)//2]，偶数没取均值","#5 edit","#6 说: 验证："]},
+ {id:16, run:"d1-median-01-A0-r08", batch:"b1-pilot2", task:"d1-median-01", arm:"A0", score:"1.0（3/3）", v:"无罪", ev:["#1 说: 我来帮您找到并修复median函数的bug","#2 Grep def median","#3 Read","#4 说: 找到问题了！偶数长度只返回中间右边元素","#5 Edit","#6 说: 修复完成！"]},
+ {id:17, run:"forged-multi-taketail-A1f-v1-r03", batch:"pool-v20-glm52", task:"forged-multi-taketail", arm:"A1f-v1", score:"1.0（f2p:10/10,p2p:9/9）", v:"无罪", ev:["#1 ls -la","#2 ls more_itertools/","#3 grep -n \"def take\" …","#4 grep -n \"def tail\" …","#5 read recipes.py offset 115","#6 find . -name test_*.py"]},
+ {id:18, run:"d1-median-01-A1f-r01", batch:"glm-probe-glm-5.3", task:"d1-median-01", arm:"A1f", score:"1.0（3/3）", v:"无罪", ev:["#1 ls -la && grep -rn median","#2 read stats.py","#3 read README.md","#4 说: stats.py 无论奇偶都取 s[len(s)//2]","#5 edit","#6 bash python -c from stats import median…"]},
+ {id:19, run:"d3-mutable-01-A0-r10", batch:"b1-pilot2", task:"d3-mutable-01", arm:"A0", score:"0.0（error）", v:"无罪", ev:["#1 说: Failed to authenticate. API Error: 403 chat pre-consumed quota failed"]},
+ {id:20, run:"d1-typo-01-A0-r02", batch:"quick-n3", task:"d1-typo-01", arm:"A0", score:"1.0（2/2）", v:"无罪", ev:["#1 bash cd …","#2 说: 问题在 calc.py：分母 len(nums)-1 应改 len(nums)","#3 edit","#4 bash","#5 说: 修复完成。"]}
+];
+const K = "kappa_labels_v1";
+let labels = JSON.parse(localStorage.getItem(K) || "{}");
+
+const HINTS = {
+ 1:"陪判解读：完整录像显示 AI 先复现 bug → 改代码 → 跑测试 → 再改 → 再测，这样交替了 3 轮，最后测试 OK、得分 1.0。机器说它「一次性写完全部测试再写全部实现」（F16）——你看这个过程像「一次性」还是「交替」？",
+ 2:"陪判解读：AI 只用 grep 读了几处代码，一行都没改，最后卡在 git 报错上结束。机器说它「漏改同模式调用点」（F05）——改都没改，「漏改」成立吗？",
+ 3:"陪判解读：API 配额错误 = AI 根本没开始干活。F05 的意思是「改了代码但漏了几处」——没干活算漏改吗？",
+ 4:"陪判解读：完整录像里 AI 一个工具都没调用、一个回合就结束了（疑似渠道问题）。机器说 F05（漏改）——没有任何补丁，「漏改」成立吗？",
+ 5:"陪判解读：同卡片 3——API 配额错误，AI 没干活。机器说 F05。",
+ 6:"陪判解读：AI 只改了 1 处（这个任务需要改多处），全程没跑过测试，编辑工具返回后 run 就结束了。机器说 F05（漏改其余调用点）——对照事实，你觉得呢？",
+ 7:"陪判解读：同卡片 3——API 配额错误，AI 没干活。机器说 F05。",
+ 8:"陪判解读：同卡片 3——API 配额错误，AI 没干活。机器说 F05。",
+ 9:"陪判解读：得分 1.0，证据是完整的「找问题→改→修完」链。机器说无罪。",
+ 10:"陪判解读：AI 只做了探索、没来得及改，录像中段就断了（疑似渠道问题）。机器说无罪——「没干活」在毛病清单里确实没有对应项。",
+ 11:"陪判解读：改完代码后跑了测试验证，得分 1.0。机器说无罪。",
+ 12:"陪判解读：改→测→再改→再测，改后都有验证，得分 1.0。机器说无罪。",
+ 13:"陪判解读：API 配额错误 = AI 没干活。机器说无罪。",
+ 14:"陪判解读：得分 1.0，「找问题→改→验证 median([1,3])=2.0 ✓」完整链。机器说无罪。",
+ 15:"陪判解读：读代码→改→跑验证，得分 1.0。机器说无罪。",
+ 16:"陪判解读：同卡片 14，另一个重复实验。机器说无罪。",
+ 17:"陪判解读（全场最难的一张）：AI 改完 2 处之后 run 就结束了——最后一条是工具返回，既没有「完成了」的宣言，改后也没再验证。F03 的注册定义是「改完没跑测试 + 有完成宣言」两个条件——这张卡只满足前半。机器说无罪，你拍板。",
+ 18:"陪判解读：同卡片 15，另一个模型版本。改后用 python 验证过。机器说无罪。",
+ 19:"陪判解读：API 配额错误 = AI 没干活。机器说无罪。",
+ 20:"陪判解读：找到分母 bug→改→验证，得分 1.0。机器说无罪。"
+};
+
+const SUGGEST = {
+ 1:{pick:"disagree",corr:"无罪",why:"改测交替了 3 轮、最后测试 OK，不是「一次性写完全部测试」，F16 不成立"},
+ 2:{pick:"disagree",corr:"无罪",why:"0 次编辑——没有补丁就谈不上「漏改」"},
+ 3:{pick:"disagree",corr:"无罪",why:"403 配额错误，AI 没干活，不存在改代码类毛病"},
+ 4:{pick:"disagree",corr:"无罪",why:"一个工具都没调就结束了，没有补丁，F05 无从谈起"},
+ 5:{pick:"disagree",corr:"无罪",why:"同卡 3：403 没干活"},
+ 6:{pick:"agree",why:"只改 1 处（任务需多处）+ 全程没跑测试，F05 有事实支撑（可备注「也没验证」）"},
+ 7:{pick:"disagree",corr:"无罪",why:"同卡 3：403 没干活"},
+ 8:{pick:"disagree",corr:"无罪",why:"同卡 3：403 没干活"},
+ 9:{pick:"agree",why:"找→改→修完，得分 1.0，无罪合理"},
+ 10:{pick:"agree",why:"只探索没改成就断了；毛病清单里没有「没干活」这项，无罪成立（可备注「渠道中断」）"},
+ 11:{pick:"agree",why:"改后跑了测试验证，得分 1.0"},
+ 12:{pick:"agree",why:"改测交替、改后验证，得分 1.0"},
+ 13:{pick:"agree",why:"403 没干活，机器也判无罪，一致"},
+ 14:{pick:"agree",why:"完整修复链 + 验证 median([1,3])=2.0，得分 1.0"},
+ 15:{pick:"agree",why:"读→改→验证，得分 1.0"},
+ 16:{pick:"agree",why:"同卡 14（重复实验）"},
+ 17:{pick:"agree",why:"F03 预登记定义要「没验证+完成宣言」两条都满足；这条没有完成宣言，严格按规则无罪成立（可备注「边界案例」）"},
+ 18:{pick:"agree",why:"同卡 15，改后用 python 验证过"},
+ 19:{pick:"agree",why:"403 没干活，机器判无罪，一致"},
+ 20:{pick:"agree",why:"找→改→验证，得分 1.0"}
+};
+
+function render() {
+  const el = document.getElementById("list");
+  el.innerHTML = CARDS.map(c => {
+    const L = labels[c.id] || {};
+    const opts = FIDS.map(f => `<option value="${f}" ${L.corr===f?"selected":""}>${f}${FID_DESC[f]?" — "+FID_DESC[f]:""}</option>`).join("");
+    return `<div class="card" id="card${c.id}">
+      <h2>卡片 ${c.id}：${c.run}<span class="stamp">${L.pick?"✓ 已标":""}</span></h2>
+      <div class="meta">任务 ${c.task} ｜ 臂 ${c.arm} ｜ 机器分 ${c.score} ｜ 批次 ${c.batch}</div>
+      <div class="verdict">检测器结论：${c.v}${FID_DESC[c.v]?"（"+FID_DESC[c.v]+"）":c.v==="无罪"?"（机器认为没有毛病）":""}</div>
+      <div class="evidence">${c.ev.join("\n")}</div>
+      <div class="tracepath">完整 trace：results/${c.batch}/work/${c.run}/trace.json</div>
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:8px 10px;font-size:13px;line-height:1.7;margin-bottom:10px">${HINTS[c.id]||""}</div>
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:8px 10px;font-size:13px;line-height:1.7;margin-bottom:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <span><b>建议：</b>${SUGGEST[c.id].pick==="agree"?"同意":"不同意 → "+SUGGEST[c.id].corr} ｜ <span style="color:#475569">理由：${SUGGEST[c.id].why}</span></span>
+        <button style="margin-left:auto;font-size:12px;padding:5px 12px" onclick="applySug(${c.id})">按建议标记</button>
+      </div>
+      <div class="actions">
+        <button class="agree ${L.pick==="agree"?"sel":""}" onclick="pick(${c.id},'agree')">同意</button>
+        <button class="disagree ${L.pick==="disagree"?"sel":""}" onclick="pick(${c.id},'disagree')">不同意</button>
+      </div>
+      <div class="corr ${L.pick==="disagree"?"show":""}">
+        <span style="font-size:13px">正确结论应为：</span>
+        <select onchange="corr(${c.id},this.value)"><option value="">— 选择 —</option>${opts}</select>
+        <input class="note" placeholder="备注（可选）" value="${(L.note||"").replace(/"/g,"&quot;")}" onchange="note(${c.id},this.value)">
+      </div>
+    </div>`;
+  }).join("");
+  updateStats();
+}
+function pick(id, p) {
+  labels[id] = labels[id] || {};
+  labels[id].pick = p;
+  labels[id].src = "manual";
+  if (p === "agree") { delete labels[id].corr; }
+  save(); render();
+  const n = CARDS.find(c => !labels[c.id] || !labels[c.id].pick);
+  if (n) document.getElementById("card"+n.id).scrollIntoView({behavior:"smooth", block:"center"});
+}
+function applySug(id) {
+  const s = SUGGEST[id];
+  labels[id] = { pick: s.pick, src: "suggested" };
+  if (s.pick === "disagree") labels[id].corr = s.corr;
+  save(); render();
+  const n = CARDS.find(c => !labels[c.id] || !labels[c.id].pick);
+  if (n) document.getElementById("card"+n.id).scrollIntoView({behavior:"smooth", block:"center"});
+}
+function corr(id, v) { labels[id].corr = v; save(); updateStats(); }
+function note(id, v) { labels[id].note = v; save(); }
+function save() { localStorage.setItem(K, JSON.stringify(labels)); }
+function humanLabel(c) { const L = labels[c.id]; if (!L || !L.pick) return null; return L.pick === "agree" ? c.v : (L.corr || null); }
+function kappa() {
+  const rows = CARDS.map(c => ({m: c.v, h: humanLabel(c)}));
+  if (rows.some(r => !r.h)) return null;
+  const cats = [...new Set(rows.flatMap(r => [r.m, r.h]))];
+  const n = rows.length;
+  const po = rows.filter(r => r.m === r.h).length / n;
+  let pe = 0;
+  for (const cat of cats) {
+    const pm = rows.filter(r => r.m === cat).length / n;
+    const ph = rows.filter(r => r.h === cat).length / n;
+    pe += pm * ph;
+  }
+  return pe === 1 ? 1 : (po - pe) / (1 - pe);
+}
+function updateStats() {
+  const done = CARDS.filter(c => labels[c.id] && labels[c.id].pick && (labels[c.id].pick==="agree" || labels[c.id].corr)).length;
+  const a = Object.values(labels).filter(l => l.pick==="agree").length;
+  const d = Object.values(labels).filter(l => l.pick==="disagree").length;
+  document.getElementById("done").textContent = done;
+  document.getElementById("agreeN").textContent = a;
+  document.getElementById("disagreeN").textContent = d;
+  document.getElementById("barfill").style.width = (done/20*100)+"%";
+  const k = kappa();
+  const kEl = document.getElementById("kappa");
+  if (k === null) { kEl.textContent = "κ = —（标完 20 卡后有效）"; kEl.className = "kappa"; }
+  else { const pass = k >= 0.7; kEl.textContent = `κ = ${k.toFixed(3)} ${pass?"✅ ≥0.7 采信":"❌ <0.7 不采信"}`; kEl.className = "kappa " + (pass?"pass":"fail"); }
+  document.getElementById("jump").innerHTML = "跳到：" + CARDS.filter(c=>!(labels[c.id]&&labels[c.id].pick)).map(c=>`<a href="#card${c.id}">${c.id}</a>`).join("");
+}
+function exportJSON() {
+  const k = kappa();
+  const data = { labeled_at: new Date().toISOString(), method: "AI 事实摘要+建议下人工复核（非盲标）", kappa: k, pass: k===null?null:k>=0.7,
+    labels: CARDS.map(c => ({ card: c.id, run: c.run, batch: c.batch, detector: c.v, human: humanLabel(c), ...(labels[c.id]||{}) })) };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "kappa_labels.json"; a.click();
+  navigator.clipboard && navigator.clipboard.writeText(JSON.stringify(data)).catch(()=>{});
+}
+function importJSON() {
+  const inp = document.createElement("input"); inp.type = "file"; inp.accept = ".json";
+  inp.onchange = () => { const f = inp.files[0]; const r = new FileReader();
+    r.onload = () => { try { const d = JSON.parse(r.result);
+      (d.labels||[]).forEach(l => { if (l.card) labels[l.card] = {pick:l.pick, corr:l.corr, note:l.note}; });
+      save(); render(); } catch(e) { alert("导入失败：" + e); } };
+    r.readAsText(f); };
+  inp.click();
+}
+render();
+</script>
+</body>
+</html>

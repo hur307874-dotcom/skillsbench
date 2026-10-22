@@ -1,0 +1,11 @@
+name: probe-hardroom
+description: "决定性实验前置：校准 deepseek 当前 A0 难度带（选 0.3~0.7 题）"
+arms:
+  - { id: A0, inject: none }
+tasks:
+  source: tasks/generated
+  only: [d3-state-hard, d3-csv-01, d3-ini-hard, d3-mutable-01, d3-round-01]
+repeats: 2
+model: deepseek-v4.1-flash
+timeout_min: 12
+concurrency: 5

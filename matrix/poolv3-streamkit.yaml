@@ -1,0 +1,13 @@
+name: poolv3-streamkit
+description: "pool-v3 streamkit 族确认：A0/A0p/A1f-conv × conv-streamkit-empty × n=5 = 15 run"
+arms:
+  - { id: A0, inject: none }
+  - { id: A0p, inject: forced, skill: C:/Users/17664/AppData/Local/Temp/skillbench-v3-skills-x7q2/placebo-cooking }
+  - { id: A1f-conv, inject: forced, skill: C:/Users/17664/AppData/Local/Temp/skillbench-v3-skills-x7q2/streamkit-convention }
+tasks:
+  source: tasks/pool-v3
+  only: [conv-streamkit-empty]
+repeats: 5
+model: deepseek-v4.1-flash
+timeout_min: 12
+concurrency: 4

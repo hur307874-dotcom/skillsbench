@@ -1,0 +1,21 @@
+{
+  "current": {
+    "version": "v1",
+    "kappa": 0.152,
+    "pass": false,
+    "positive_precision": 0.125,
+    "negative_accuracy": 1.0,
+    "labeled_at": "2026-10-03",
+    "method": "AI 事实摘要+建议下人工复核（非盲标）",
+    "note": "v1 未过门：阳性误报模式=对无活动 run 扣改代码类帽子（B15 修复对象）；阴性 12/12 可信"
+  },
+  "history": {
+    "v1": {
+      "kappa": 0.152,
+      "pass": false,
+      "cards": 20,
+      "false_positive_pattern": "未干活 run（渠道死/0编辑）被判 F05/F16 ×7",
+      "source": "docs/kappa_labels.json + docs/KAPPA_RESULT.md"
+    }
+  }
+}

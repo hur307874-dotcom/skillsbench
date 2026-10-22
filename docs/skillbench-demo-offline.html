@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SKILL-BENCH · 离线演示版</title>
+<style>
+:root{--red:#C00000;--ink:#1A1A1A;--slate:#44546A;--gray:#8a8a8a;--mist:#F2F2F2;--line:#E3E0D8}
+*{box-sizing:border-box;margin:0}
+body{font-family:"Segoe UI","Microsoft YaHei",Arial,sans-serif;background:#FAFAF8;color:var(--ink);font-size:14px}
+.wrap{max-width:1080px;margin:0 auto;padding:24px}
+.hd{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.chip{background:var(--red);color:#fff;font-weight:700;font-size:12px;padding:5px 12px;letter-spacing:.5px}
+.hd h1{font-size:22px}
+.offline{margin-left:auto;font-size:11px;color:var(--gray);border:1px solid var(--line);padding:4px 10px;border-radius:12px}
+.sub{color:var(--slate);font-size:12.5px;margin-bottom:20px}
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:14px;cursor:pointer;transition:border-color .15s}
+.card:hover{border-color:var(--red)}
+.card h3{font-size:15px;display:flex;align-items:center;gap:10px}
+.badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:11px;color:#fff;white-space:nowrap}
+.b-neg{background:#C0392B}.b-null{background:#7F8C8D}.b-pos{background:#1D9E75}.b-out{background:#B4B2A9}.b-inc{background:#BA7517}
+.meta{color:var(--slate);font-size:12px;margin-top:6px}
+.verdict{color:var(--ink);font-size:12.5px;margin-top:8px;font-style:italic}
+.back{color:var(--red);cursor:pointer;font-size:13px;margin-bottom:14px;display:inline-block}
+.pipeline{display:flex;gap:6px;margin:10px 0 16px}
+.st{font-size:11px;padding:4px 10px;background:var(--mist);border-radius:10px;color:var(--slate)}
+.st.on{background:var(--red);color:#fff;font-weight:700}
+.vcard{background:#FFF5F5;border:1px solid #F0C8C8;border-radius:10px;padding:14px 16px;margin-bottom:14px}
+.vcard .d{font-size:12px;font-weight:700;color:var(--red);margin-bottom:6px}
+.vcard .v{font-size:14px;font-weight:600}
+.stats{display:flex;gap:10px;margin:12px 0}
+.stat{flex:1;background:var(--mist);border-radius:8px;padding:10px 12px}
+.stat .k{font-size:11px;color:var(--slate)}
+.stat .n{font-size:18px;font-weight:700;margin-top:2px}
+.stat .n.r{color:var(--red)}
+table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:8px}
+th{text-align:left;color:var(--slate);font-weight:600;font-size:11.5px;padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:7px 8px;border-bottom:1px solid #F0EEE8}
+.neg{color:#C0392B;font-weight:700}.pos{color:#1D9E75;font-weight:700}
+.bar{height:8px;border-radius:4px;background:#EDECE6;overflow:hidden;margin-top:4px}
+.bar i{display:block;height:100%}
+.rule{border-left:3px solid var(--red);padding:8px 12px;margin:8px 0;background:#FFF9F9;font-size:12.5px}
+.rule .rid{font-family:Consolas,monospace;font-weight:700;font-size:12px}
+.trace{background:#141414;color:#D8D8D8;border-radius:8px;padding:14px 16px;font-family:Consolas,monospace;font-size:12px;line-height:1.8;margin-top:8px}
+.trace .bad{color:#FF6B6B;font-weight:700}
+.trace .ok{color:#7BC47F}
+.sec{font-size:13px;font-weight:700;margin:18px 0 8px;color:var(--ink)}
+.sec::before{content:"";display:inline-block;width:8px;height:8px;background:var(--red);margin-right:8px}
+.note{font-size:11px;color:var(--gray);margin-top:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hd"><span class="chip">SKILL-BENCH</span><h1>评测与优化 · 离线演示</h1>
+    <span class="offline">数据内置 · 无需服务器 · 双击即演</span></div>
+  <div class="sub">5 张真实评测单（2455 run 实验体系的判例选）——点任意一张看完整判定</div>
+  <div id="app"></div>
+</div>
+<script>
+const DATA = [{"id": "eval-brainstorming-1006-1836", "name": "brainstorming", "tier": "standard", "decision": "decisive-negative", "verdict": "带头上强方向性负信号（A0 9/10 vs A1f 4/11；n 小，幅度需加厚）（候选集近全天花板：取相对最难 3 题兜底验证）", "signal": "0/6", "cost_ratio": 5.07, "runs": 0, "tasks": [{"task": "d3-state-hard", "a0": 1.0, "a0_n": 4, "a0_turns": 6.0, "a1f": 1.0, "a1f_n": 3, "a1f_turns": 5.3, "delta": 0.0}, {"task": "d3-mutable-01", "a0": 1.0, "a0_n": 4, "a0_turns": 6.8, "a1f": 1.0, "a1f_n": 1, "a1f_turns": 6.0, "delta": 0.0}, {"task": "d3-csv-01", "a0": 0.667, "a0_n": 2, "a0_turns": 7.0}], "analysis": [{"id": "must-use-before-creative-work", "rule": "You MUST use brainstorming before any creative work such as creating features, building components, adding functionality, or modifying behavior.", "cost_hint": "high"}, {"id": "classify-announce-and-ratchet-path", "rule": "Before the first question, classify the request as spike, bounded, or architectural, announce the classification aloud, and when in doubt take the heavier path or upgrade mid-task if hidden complexity appears.", "cost_hint": "medium"}, {"id": "discover-intent-before-proposing", "rule": "When purpose or intended use is missing, ask one focused question about the intended outcome or success before proposing features or an approach.", "cost_hint": "medium"}, {"id": "write-back-and-carry-understanding", "rule": "Summarize the agreed outcome, constraints, and success criteria in a short note that separates facts from assumptions, invite correction, and carry that understanding into the selected path's design artifact.", "cost_hint": "medium"}, {"id": "hard-gate-before-implementation", "rule": "Before any implementation action, complete the selected path's prerequisites and obtain human approval for the exact stage presented, without treating one approval as permission to skip later stages.", "cost_hint": "high"}], "judge_rules": "增益=(A1f−A0) 按题配对；出局=分诊零信号且天花板未触发；decisive-*=决定性模式预登记判词（n 小，幅度需加厚）"}, {"id": "eval-systematic-debugging-1006-1752", "name": "systematic-debugging", "tier": "standard", "decision": "out", "verdict": "分诊出局：在本任务池上看不到值得深测的信号（零增益且成本正常）", "signal": "0/6", "cost_ratio": 1.16, "runs": 8, "tasks": [{"task": "d3-csv-01", "a0": 1.0, "a0_n": 4, "a0_turns": 9.5, "a1f": 0.417, "a1f_n": 4, "a1f_turns": 12.2, "delta": -0.583}], "analysis": [{"id": "no-fix-without-root-cause", "rule": "在提出任何修复前，必须先完成根因调查（Phase 1）。", "cost_hint": "高"}, {"id": "complete-phases-in-order", "rule": "必须完成当前调试阶段后才能进入下一阶段。", "cost_hint": "高"}, {"id": "read-errors-carefully", "rule": "仔细完整阅读错误消息、警告、堆栈跟踪、行号、文件路径和错误码。", "cost_hint": "低"}, {"id": "reproduce-consistently", "rule": "必须可靠地复现问题；若无法复现，应收集更多数据而不是猜测。", "cost_hint": "中"}, {"id": "instrument-component-boundaries", "rule": "多组件系统修复前，应在各组件边界添加诊断日志以定位失败位置。", "cost_hint": "高"}], "judge_rules": "增益=(A1f−A0) 按题配对；出局=分诊零信号且天花板未触发；decisive-*=决定性模式预登记判词（n 小，幅度需加厚）", "trace_quote": {"title": "0 分 run 的 trace 摘录（d3-csv-01-A1f-r03）", "lines": ["[turn 7]  阶段三完成：根因分析已写入 ROOT_CAUSE.md（412 字）", "[turn 9]  阶段四：修复已应用，验证通过", "[turn 11] All pass. Fixed.", "[宿主机] 隐藏测试：0/3 —— f2p 全挂（age 列解析仍崩溃）"]}}, {"id": "eval-tdd-v1-livetest-1006-0132", "name": "tdd-v1-livetest", "tier": "quick-lite", "decision": "decisive-null", "verdict": "带头上亦零增益：饱和判定坐实（裸考做不对的题，读了文档也做不对）", "signal": "0/6", "cost_ratio": 1.18, "runs": 0, "tasks": [{"task": "d3-csv-01", "a0": 1.0, "a0_n": 4, "a0_turns": 12.2, "a1f": 0.917, "a1f_n": 4, "a1f_turns": 22.0, "delta": -0.083}], "analysis": [], "judge_rules": "增益=(A1f−A0) 按题配对；出局=分诊零信号且天花板未触发；decisive-*=决定性模式预登记判词（n 小，幅度需加厚）"}, {"id": "eval-writing-plans-1006-1809", "name": "writing-plans", "tier": "standard", "decision": "decisive-null", "verdict": "带头上亦零增益：饱和判定坐实（裸考做不对的题，读了文档也做不对）（候选集近全天花板：取相对最难 3 题兜底验证）", "signal": "0/6", "cost_ratio": 1.59, "runs": 0, "tasks": [{"task": "d3-csv-01", "a0": 1.0, "a0_n": 4, "a0_turns": 10.0, "a1f": 0.833, "a1f_n": 4, "a1f_turns": 8.8, "delta": -0.167}, {"task": "d3-mutable-01", "a0": 1.0, "a0_n": 4, "a0_turns": 6.2, "a1f": 1.0, "a1f_n": 4, "a1f_turns": 7.5, "delta": 0.0}, {"task": "d3-round-01", "a0": 1.0, "a0_n": 3, "a0_turns": 6.0, "a1f": 1.0, "a1f_n": 4, "a1f_turns": 7.0, "delta": 0.0}], "analysis": [], "judge_rules": "增益=(A1f−A0) 按题配对；出局=分诊零信号且天花板未触发；decisive-*=决定性模式预登记判词（n 小，幅度需加厚）"}, {"id": "eval-tdd-v1-livetest-1006-0142", "name": "tdd-v1-livetest", "tier": "standard", "decision": "decisive-positive", "verdict": "决定性为正：带头题上 Skill 臂显著高（A0 3/4 vs A1f 4/4）——值得升级 standard", "signal": "0/6", "cost_ratio": 1.2, "runs": 0, "tasks": [{"task": "d3-csv-01", "a0": 0.833, "a0_n": 4, "a0_turns": 10.2, "a1f": 1.0, "a1f_n": 4, "a1f_turns": 16.8, "delta": 0.167}], "analysis": [{"id": "vertical-slices", "rule": "Do not write all tests first then all implementation; instead, alternate one test with one implementation in vertical slices.", "cost_hint": "低"}, {"id": "one-test-at-a-time", "rule": "Write only one test at a time, then implement minimal code to pass it before writing the next test.", "cost_hint": "低"}, {"id": "no-speculative-code", "rule": "Do not add code or features beyond what is needed to pass the current test; do not anticipate future tests.", "cost_hint": "低"}, {"id": "public-interface-only", "rule": "Tests must exercise behavior through public interfaces only, never through private methods, internal collaborators, or external means like direct database queries.", "cost_hint": "中"}, {"id": "behavior-not-implementation", "rule": "Tests must describe what the system does (observable behavior), not how it is implemented internally.", "cost_hint": "中"}], "judge_rules": "增益=(A1f−A0) 按题配对；出局=分诊零信号且天花板未触发；decisive-*=决定性模式预登记判词（n 小，幅度需加厚）"}];
+const DEC = {
+  "decisive-negative": ["带头上负", "b-neg"],
+  "decisive-null": ["饱和坐实", "b-null"],
+  "decisive-positive": ["带头上正", "b-pos"],
+  "out": ["分诊出局", "b-out"],
+  "inconclusive": ["不结论", "b-inc"],
+};
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function listView() {
+  $("#app").innerHTML = DATA.map((e, i) => {
+    const [t, c] = DEC[e.decision] || [e.decision, "b-out"];
+    return `<div class="card" onclick="detailView(${i})">
+      <h3>${esc(e.name)} <span class="badge ${c}">${t}</span></h3>
+      <div class="meta">信号 ${esc(e.signal ?? "—")} ｜ 成本比 ×${e.cost_ratio ?? "—"} ｜ ${e.runs} run ｜ 档位 ${esc(e.tier)}</div>
+      <div class="verdict">${esc(e.verdict)}</div></div>`;
+  }).join("");
+}
+
+function bar(v, color) {
+  const w = Math.max(0, Math.min(1, v || 0)) * 100;
+  return `<div class="bar"><i style="width:${w}%;background:${color}"></i></div>`;
+}
+
+function detailView(i) {
+  const e = DATA[i];
+  const [t, c] = DEC[e.decision] || [e.decision, "b-out"];
+  const stages = ["预检", "冒烟", "分诊", "决定性", "报告"];
+  const tasks = e.tasks.map(r => `<tr>
+    <td>${esc(r.task)}</td>
+    <td>${r.a0?.toFixed(2) ?? "—"}${bar(r.a0, "#639922")}</td>
+    <td>${r.a1f?.toFixed(2) ?? "—"}${bar(r.a1f, "#C00000")}</td>
+    <td class="${(r.delta ?? 0) < 0 ? "neg" : "pos"}">${r.delta > 0 ? "+" : ""}${r.delta?.toFixed(2) ?? "—"}</td>
+    <td>${r.a0_turns ?? "—"} / ${r.a1f_turns ?? "—"}</td></tr>`).join("");
+  const rules = (e.analysis || []).map(r => `<div class="rule">
+    <div class="rid">${esc(r.id)} <span style="color:${r.cost_hint === "high" ? "#C0392B" : "#7F8C8D"}">[${esc(r.cost_hint || "")}]</span></div>
+    <div>${esc(r.rule)}</div></div>`).join("");
+  const trace = e.trace_quote ? `<div class="sec">trace 尸检摘录</div>
+    <div style="font-size:12px;color:var(--slate)">${esc(e.trace_quote.title)}</div>
+    <div class="trace">${e.trace_quote.lines.map(l =>
+      l.includes("All pass") ? `<span class="ok">${esc(l)}</span>`
+      : l.includes("0/3") ? `<span class="bad">${esc(l)}</span>` : esc(l)).join("<br>")}</div>` : "";
+  $("#app").innerHTML = `
+    <span class="back" onclick="listView()">← 返回列表</span>
+    <div class="pipeline">${stages.map(s => `<span class="st on">${s}</span>`).join("")}</div>
+    <div class="vcard"><div class="d">判定：<span class="badge ${c}">${t}</span></div>
+      <div class="v">${esc(e.verdict)}</div></div>
+    <div class="stats">
+      <div class="stat"><div class="k">分诊信号</div><div class="n">${esc(e.signal ?? "—")}</div></div>
+      <div class="stat"><div class="k">成本比</div><div class="n r">×${e.cost_ratio ?? "—"}</div></div>
+      <div class="stat"><div class="k">总 run</div><div class="n">${e.runs}</div></div>
+      <div class="stat"><div class="k">沙箱越界</div><div class="n">0</div></div>
+    </div>
+    <div class="sec">任务级下钻（A0 裸考 vs A1f 加载，均分）</div>
+    <table><tr><th>任务</th><th>A0 裸考</th><th>A1f 加载</th><th>Δ</th><th>轮次 A0/A1f</th></tr>${tasks}</table>
+    ${rules ? `<div class="sec">弊端定位（机器归因，κ 持证上岗）</div>${rules}` : ""}
+    ${trace}
+    <div class="sec">判定依据（预登记规则）</div>
+    <div class="note">${esc(e.judge_rules)}</div>`;
+  window.scrollTo(0, 0);
+}
+listView();
+</script>
+</body>
+</html>

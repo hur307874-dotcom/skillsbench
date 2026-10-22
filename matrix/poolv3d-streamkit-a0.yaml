@@ -1,0 +1,11 @@
+name: poolv3d-streamkit-a0
+description: "pool-v3 正式版 v3.4：streamkit 族 A0 臂 n=5（臂间隔离批次）"
+arms:
+  - { id: A0, inject: none }
+tasks:
+  source: tasks/pool-v3
+  only: [conv-streamkit-empty]
+repeats: 5
+model: deepseek-v4.1-flash
+timeout_min: 12
+concurrency: 4

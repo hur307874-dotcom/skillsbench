@@ -1,0 +1,12 @@
+name: decisive-sysdbg
+description: "决定性实验：systematic-debugging 在 0.3~0.7 带头任务 d3-csv-01 上（A0/A1f × n=4）"
+arms:
+  - { id: A0, inject: none }
+  - { id: A1f, inject: forced, skill: skills/incoming/systematic-debugging-1005-175959 }
+tasks:
+  source: tasks/generated
+  only: [d3-csv-01]
+repeats: 4
+model: deepseek-v4.1-flash
+timeout_min: 12
+concurrency: 4

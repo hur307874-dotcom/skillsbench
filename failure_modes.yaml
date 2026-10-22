@@ -1,0 +1,48 @@
+# failure_modes.yaml — F-ID 失效模式清单（预登记）
+# 三者共用同一 ID 体系：任务狙击它（meta.yaml targets_fids）、
+# Skill 指令治它（manifest targets）、归因落到它（attribution 输出）。
+# 登记时间：2026-09-23（先于任何实验数据）
+
+- id: F01
+  desc: "未复现就动手改：不先运行代码/复现错误，直接凭报错文本改代码"
+  observable: "首次 Edit 之前不存在任何 bash/测试/运行事件"
+
+- id: F03
+  desc: "不跑测试就宣布完成：修改后未执行任何验证即声称 done"
+  observable: "最后一次 Edit 之后不存在测试/运行事件，且 assistant 文本含完成声明"
+
+- id: F05
+  desc: "漏改同模式调用点：只改了报错的那处，漏掉其余同模式位置"
+  observable: "补丁修改处数 < meta.sites_required（由隐藏测试与完整性断言确认）"
+
+- id: F07
+  desc: "改测试代替改实现：测试失败时修改测试文件迎合实现"
+  observable: "对 tests/ 目录的写操作（meta.forbidden_edits 命中即判负）"
+
+- id: F09
+  desc: "使用已废弃或错误的 API 签名"
+  observable: "隐藏测试因签名/参数名不匹配失败；trace 中出现旧 API 名"
+
+- id: F11
+  desc: "过度验证：反复运行同一命令/同一测试，耗尽轮次或 token 预算"
+  observable: "同一工具同样参数重复调用 ≥3 次且无中间修改"
+
+- id: F13
+  desc: "过度修改：改动范围明显超过任务必要（顺手重构、投机性新增功能）"
+  observable: "补丁触及 meta 声明范围外的文件/函数"
+
+- id: F15
+  desc: "等待不存在的用户：发出请求确认/批准的表述，无人回应后自问自答或空转"
+  observable: "assistant 文本含确认请求句式（confirm/approve/please confirm/是否确认）且后续无真实用户输入即继续；记录该段 wasted_turns/wasted_tokens"
+
+- id: F16
+  desc: "批量造测试（horizontal slicing）：一次性写完全部测试再写全部实现"
+  observable: "多个测试函数在同一 Edit/连续 Edit 中落盘，且此前无任何实现-测试交替"
+
+- id: F17
+  desc: "误读报错治症状：修了报错指向的位置但没修根因（或修错位置）"
+  observable: "修改后同类错误复现（同一测试再次失败且报错信息相同）"
+
+- id: F19
+  desc: "空转查找不存在的项目文件：反复尝试读取 CONTEXT.md / docs/adr 等不存在的文件"
+  observable: "对不存在路径的 read/glob 调用 ≥2 次且均返回 not found"

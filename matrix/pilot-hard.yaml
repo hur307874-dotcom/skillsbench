@@ -1,0 +1,18 @@
+# matrix/pilot-hard.yaml — hard 池 Pilot Gate（v6.5，2026-09-28）
+# 目的：验证 hard 变体在 dis 线主迭代模型（deepseek-v4.1-flash）上的裸考基线
+# 是否落入目标带（D2 40–80% / D3 <40%），为 model_gradient 与 quick 档选任务。
+name: pilot-hard
+description: "hard 变体 × A0 × n=2 = 12 run（基线校准）"
+
+arms:
+  - id: A0
+    inject: none
+
+tasks:
+  source: tasks/generated
+  only: [d2-enum-hard, d2-sig-hard, d2-config-hard, d3-state-hard, d3-bus-hard, d3-ini-hard]
+repeats: 2
+
+model: deepseek-v4.1-flash
+timeout_min: 12
+concurrency: 4   # dis 线实测：10 并发触发 429 静默死跑（auto_retry_end 登记）

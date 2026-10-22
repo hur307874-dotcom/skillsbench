@@ -1,0 +1,13 @@
+name: auto-probe
+description: "H2 触发模式：A0 / A1-auto(pi 原生 --skill) / A1f-v1 × 4 multi 任务 × n=2 = 24 run"
+arms:
+  - { id: A0, inject: none }
+  - { id: A1-auto, inject: auto, skill: skills/tdd-v1 }
+  - { id: A1f-v1, inject: forced, skill: skills/tdd-v1 }
+tasks:
+  source: tasks/pool-v2/forged-final
+  only: [forged-multi-sieve, forged-multi-dual, forged-multi-crossfile, forged-multi-taketail]
+repeats: 2
+model: deepseek-v4.1-flash
+timeout_min: 12
+concurrency: 4

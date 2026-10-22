@@ -1,0 +1,30 @@
+# matrix/model_gradient.yaml — H4 模型梯度（dis 线，v6.5 新增）
+# 原设计 claude 三档（Haiku/Sonnet/Opus）随 ENGINX 下线不可行；
+# dis 站内的"模型进步"序列：glm-5.1 → 5.2 → 5.3（同族三代代际演进，最干净的 H4 素材）。
+# 判据不变：三档点估计单调趋势 + 方向一致（每格 run 数有限，只作方向性证据）。
+name: model-gradient
+description: "glm 三代 × A0/A1f × dev 6 任务 × n=2 = 36 run（H4 梯度，dis 线）"
+
+arms:
+  - id: A0
+    inject: none
+  - id: A1f
+    inject: forced
+
+tasks:
+  source: tasks/generated
+  per_difficulty: 2     # dev 6 任务（D1/D2/D3 各 2）
+repeats: 2
+
+model: glm-5.3          # 占位：实际跑三轮，分别 --model glm-5.1 / glm-5.2 / glm-5.3
+timeout_min: 12
+concurrency: 4
+
+gradient:
+  models: [glm-5.1, glm-5.2, glm-5.3]       # 代际序列（主梯度）
+  tier_models: [deepseek-v4.1-flash, deepseek-v4-pro]  # 档位序列（辅）
+  criterion: "三档点估计单调趋势 + 方向一致；与 claude 线（若恢复）分开报告"
+  note: "每轮 = 2 臂 × 6 任务 × n=2 = 12 run；三代共 36 run"
+
+estimate:
+  minutes_per_run: { D1: 1, D2: 2, D3: 5 }   # dis 线实测（pi-ql1：14–140s）

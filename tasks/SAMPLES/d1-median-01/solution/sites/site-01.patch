@@ -1,0 +1,14 @@
+diff --git a/stats.py b/stats.py
+index 37cbe10..a33d8d6 100644
+--- a/stats.py
++++ b/stats.py
+@@ -1,4 +1,8 @@
+ def median(xs):
+     """Return the median of a non-empty list of numbers."""
+     s = sorted(xs)
+-    return s[len(s) // 2]
++    n = len(s)
++    mid = n // 2
++    if n % 2:
++        return s[mid]
++    return (s[mid - 1] + s[mid]) / 2

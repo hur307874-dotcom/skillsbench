@@ -1,0 +1,11 @@
+name: probe-mined2
+description: "真题实战验证：2 归一任务 × A0 × n=2（新镜像+长超时）"
+arms:
+  - { id: A0, inject: none }
+tasks:
+  source: tasks/generated
+  only: [mined-exactly_n, mined-substrings2]
+repeats: 2
+model: deepseek-v4.1-flash
+timeout_min: 25
+concurrency: 4

@@ -1,0 +1,22 @@
+# matrix/pilot2-ds.yaml — B1 纠偏复测（deepseek 版）：加料版 pilot × 裸 deepseek-v4-flash × n=10
+# 背景：quota 耗尽（403 pre-consumed quota），实测中转站 /v1/messages 支持 deepseek
+# 模型且 tool use 正常（2026-09-26 探针），deepseek 单价远低于 claude，先用它续跑。
+name: pilot-gate-2-deepseek
+description: "d2-enum-hard + d3-state-hard 复测（deepseek-v4-flash 替代 haiku，quota 应急）"
+
+arms:
+  - id: A0
+    inject: none
+
+tasks:
+  source: tasks/pilot2
+repeats: 10
+
+model: deepseek-v4-flash
+timeout_min: 12
+concurrency: 5
+
+gate:
+  d2_target: "40-80%"
+  d3_target: "<40%"
+  note: "模型换为 deepseek-v4-flash，baseline 与 haiku 不可直接比，单独记录"

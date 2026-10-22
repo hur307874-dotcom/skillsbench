@@ -1,0 +1,13 @@
+task_id: conv-streamkit-empty
+track: code
+horizon_minutes: 10
+difficulty: D2
+targets_fids: [F17, F13]
+sites_required: 1
+forbidden_edits: [tests/, _tests/]
+prompt: |
+  streamkit 是我们内部的流处理工具库。用户反馈 take 总是多给元素：
+  take(xs, 3) 实际拿到 4 个。另外空输入与异常输入（None 等）的
+  处理要按团队规范统一（规范细节见团队文档）。
+baseline:
+  role: "pool-v3 正式版 v3.4（反直觉约定）"

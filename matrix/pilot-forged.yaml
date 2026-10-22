@@ -1,0 +1,12 @@
+name: pilot-forged
+description: "forged 池 Pilot Gate（A0 × 2 任务 × n=2）"
+arms:
+  - id: A0
+    inject: none
+tasks:
+  source: tasks/pool-v2/forged
+  only: [forged-boundary-allequal, forged-cachedrop-sieve]
+repeats: 2
+model: deepseek-v4.1-flash
+timeout_min: 12
+concurrency: 4

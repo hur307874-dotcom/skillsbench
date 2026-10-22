@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>skill-bench — 你的 Skill 值多少分</title>
+<style>
+:root {
+  --bg: #0a0e14; --bg-soft: #0f141c; --panel: #111823; --panel-2: #151e2b;
+  --line: #1f2a3a; --line-soft: #182232;
+  --text: #e6edf5; --text-2: #93a3b8; --text-3: #5b6b82;
+  --accent: #7c6cff; --accent-soft: rgba(124,108,255,.14);
+  --green: #34d399; --green-soft: rgba(52,211,153,.12);
+  --amber: #f5b545; --amber-soft: rgba(245,181,69,.12);
+  --red: #f87171; --red-soft: rgba(248,113,113,.12);
+  --blue: #5aa9ff;
+  --mono: "JetBrains Mono", "SF Mono", Consolas, monospace;
+  --sans: "Inter", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--text); font-family: var(--sans);
+  font-size: 14px; line-height: 1.7;
+  background-image: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(124,108,255,.09), transparent);
+}
+code, .mono { font-family: var(--mono); }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px 80px; }
+header {
+  position: sticky; top: 0; z-index: 10;
+  background: rgba(10,14,20,.82); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line-soft);
+}
+header .wrap { padding: 13px 28px; display: flex; align-items: center; }
+.logo { font-family: var(--mono); font-weight: 700; font-size: 15px; cursor: pointer; }
+.logo b { color: var(--accent); }
+.logo .tag { color: var(--text-3); font-weight: 400; font-size: 12px; margin-left: 10px; }
+.hdr-right { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+.btn {
+  background: var(--accent); color: #fff; border: none; border-radius: 9px;
+  font: 600 13px var(--sans); padding: 8px 18px; cursor: pointer; transition: .15s;
+}
+.btn:hover { filter: brightness(1.15); }
+.btn.ghost { background: none; color: var(--text-2); box-shadow: inset 0 0 0 1px var(--line); }
+.btn.ghost:hover { color: var(--text); box-shadow: inset 0 0 0 1px #2b3a52; }
+
+/* ---------- 提交区 ---------- */
+.hero { padding: 52px 0 26px; text-align: center; }
+.hero .kicker { font: 500 12px var(--mono); color: var(--accent); letter-spacing: 2.5px; text-transform: uppercase; }
+.hero h1 { font-size: 36px; font-weight: 700; letter-spacing: -.8px; margin: 12px 0 10px; }
+.hero h1 em { font-style: normal; color: var(--accent); }
+.hero p { color: var(--text-2); font-size: 14.5px; max-width: 620px; margin: 0 auto; }
+
+.dropzone {
+  margin: 30px auto 0; max-width: 640px;
+  border: 1.5px dashed #2b3a52; border-radius: 16px; padding: 40px 30px;
+  background: var(--panel); cursor: pointer; transition: .2s;
+}
+.dropzone:hover, .dropzone.over { border-color: var(--accent); background: var(--panel-2); }
+.dropzone .icon { font-size: 26px; }
+.dropzone h3 { margin: 10px 0 4px; font-size: 16px; }
+.dropzone .sub { color: var(--text-3); font-size: 12.5px; }
+.dropzone .sub code { color: var(--accent); font-size: 12px; }
+.paste-row { max-width: 640px; margin: 14px auto 0; display: flex; gap: 10px; }
+.paste-row input {
+  flex: 1; background: var(--panel); border: 1px solid var(--line); border-radius: 9px;
+  color: var(--text); font: 13px var(--mono); padding: 10px 14px; outline: none;
+}
+.paste-row input:focus { border-color: var(--accent); }
+
+/* ---------- 评测单列表 ---------- */
+.section { margin-top: 46px; }
+.section > .head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 14px; }
+.section > .head .idx { font: 700 13px var(--mono); color: var(--accent); }
+.section > .head h2 { font-size: 19px; font-weight: 650; letter-spacing: -.3px; }
+.section > .head .note { color: var(--text-3); font-size: 12px; margin-left: auto; }
+.card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+  padding: 18px 20px;
+}
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; font: 600 11px var(--mono); color: var(--text-3); letter-spacing: 1px;
+     padding: 10px 14px; border-bottom: 1px solid var(--line); text-transform: uppercase; }
+td { padding: 13px 14px; border-bottom: 1px solid var(--line-soft); font-size: 13.5px; vertical-align: middle; }
+tbody tr { cursor: pointer; transition: background .12s; }
+tbody tr:hover { background: var(--panel-2); }
+tbody tr:last-child td { border-bottom: none; }
+.pill { display: inline-block; font: 600 11px var(--mono); padding: 3px 10px; border-radius: 999px; }
+.pill.g { background: var(--green-soft); color: var(--green); }
+.pill.a { background: var(--amber-soft); color: var(--amber); }
+.pill.r { background: var(--red-soft); color: var(--red); }
+.pill.b { background: var(--accent-soft); color: var(--accent); }
+.pill.run { background: var(--accent-soft); color: var(--accent); }
+.pill.run::before { content: "●"; margin-right: 5px; animation: blink 1.2s infinite; }
+@keyframes blink { 50% { opacity: .25; } }
+
+/* ---------- 详情页 ---------- */
+.detail-back { margin: 26px 0 14px; }
+.pipeline { display: flex; gap: 0; margin: 22px 0 8px; }
+.pstep { flex: 1; text-align: center; position: relative; padding-top: 26px; }
+.pstep::before {
+  content: ""; position: absolute; top: 8px; left: 0; right: 0; height: 2px; background: var(--line);
+}
+.pstep:first-child::before { left: 50%; } .pstep:last-child::before { right: 50%; }
+.pstep .knob {
+  position: absolute; top: 2px; left: 50%; transform: translateX(-50%);
+  width: 14px; height: 14px; border-radius: 50%; background: var(--bg);
+  border: 2px solid var(--line);
+}
+.pstep.done .knob { background: var(--green); border-color: var(--green); }
+.pstep.done::before { background: var(--green); }
+.pstep.now .knob { border-color: var(--accent); background: var(--accent); box-shadow: 0 0 12px var(--accent); animation: blink 1.2s infinite; }
+.pstep.now::before { background: linear-gradient(90deg, var(--green), var(--accent)); }
+.pstep .nm { font-size: 12px; color: var(--text-3); }
+.pstep.done .nm { color: var(--green); } .pstep.now .nm { color: var(--text); font-weight: 600; }
+.pstep .tm { font: 11px var(--mono); color: var(--text-3); }
+
+.verdict {
+  border-radius: 16px; padding: 26px 28px; margin-top: 22px;
+  border: 1px solid var(--line); background: var(--panel);
+}
+.verdict.g { border-color: rgba(52,211,153,.4); background: linear-gradient(180deg, rgba(52,211,153,.07), var(--panel) 60%); }
+.verdict.r { border-color: rgba(248,113,113,.35); background: linear-gradient(180deg, rgba(248,113,113,.06), var(--panel) 60%); }
+.verdict.a { border-color: rgba(245,181,69,.35); background: linear-gradient(180deg, rgba(245,181,69,.06), var(--panel) 60%); }
+.verdict .lbl { font: 600 11px var(--mono); letter-spacing: 2px; color: var(--text-3); text-transform: uppercase; }
+.verdict h2 { font-size: 24px; margin: 6px 0 8px; letter-spacing: -.4px; }
+.verdict p { color: var(--text-2); max-width: 700px; }
+
+.grid { display: grid; gap: 14px; }
+.grid.c2 { grid-template-columns: 1fr 1fr; }
+.grid.c4 { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 900px) { .grid.c2,.grid.c4 { grid-template-columns: 1fr 1fr; } }
+.stat .big { font: 700 28px/1.25 var(--mono); letter-spacing: -1px; margin-top: 2px; }
+.stat .lb { color: var(--text-3); font-size: 12px; }
+.big.g { color: var(--green); } .big.a { color: var(--amber); } .big.r { color: var(--red); }
+
+.bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; min-width: 80px; margin: 4px 0; }
+.bar > i { display: block; height: 100%; background: var(--accent); }
+.bar > i.g { background: var(--green); }
+.armrow { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line-soft); }
+.armrow:last-child { border: none; }
+.armrow .arm { font: 600 12px var(--mono); width: 90px; color: var(--text-2); }
+.armrow .sc { font: 700 14px var(--mono); width: 60px; text-align: right; }
+.codeblock {
+  background: var(--bg-soft); border: 1px solid var(--line); border-radius: 12px;
+  padding: 14px 16px; font: 12px/1.75 var(--mono); color: var(--text-2);
+  overflow-x: auto; white-space: pre; max-height: 260px; overflow-y: auto;
+}
+.view { display: none; } .view.active { display: block; }
+.footer { margin-top: 70px; padding-top: 20px; border-top: 1px solid var(--line-soft);
+          color: var(--text-3); font-size: 12px; display: flex; gap: 16px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<header><div class="wrap">
+  <div class="logo" onclick="go('home')">skill<b>-bench</b><span class="tag">你的 Skill 值多少分</span></div>
+  <div class="hdr-right">
+    <span id="api-badge" class="pill a">API 连接中…</span><span style="color:var(--text-3);font-size:10px">v1010-1558</span>
+    <button class="btn ghost" onclick="go('home')">评测单</button>
+    <button class="btn" onclick="document.getElementById('dz').scrollIntoView({behavior:'smooth'})">+ 提交 Skill</button>
+  </div>
+</div></header>
+
+<div class="wrap">
+
+<!-- ==================== 首页：提交 + 评测单列表 ==================== -->
+<section id="v-home" class="view active">
+  <div class="hero">
+    <div class="kicker">Skill Evaluation as a Service</div>
+    <h1>把 Skill 丢过来，<em>分数自己出来</em></h1>
+    <p>冒烟查坑 → quick-lite 分诊 → 确认批确诊。裸考基线、安慰剂对照、成本核算、失效归因——全自动，机械判分，不阅卷。</p>
+  </div>
+
+  <div class="dropzone" id="dz">
+    <div class="icon">⬆</div>
+    <h3>把 SKILL.md 拖进这个虚线框</h3>
+    <div class="sub">松手即读取 · 或从下面两个入口选一个</div>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;align-items:center">
+      <button class="btn" onclick="event.stopPropagation();demoSubmit()">📁 提交 Skill</button>
+    </div>
+  </div>
+  <div class="paste-row">
+    <input placeholder="或者粘贴 SKILL.md 全文……（Enter 提交）">
+    <button class="btn" onclick="demoSubmit()">开始评测</button>
+  </div>
+  <div class="paste-row">
+    <input id="gh-url" placeholder="或粘贴 GitHub 网址（blob/tree/仓库根均可）……（Enter 拉取）">
+    <button class="btn ghost" id="gh-btn" onclick="fetchGitHub()">拉取 Skill</button>
+  </div>
+  <input type="file" id="file-inp" accept=".md,.markdown,.txt" style="display:none">
+  <div id="gh-status" style="max-width:640px;margin:10px auto 0;display:none"></div>
+
+  <div class="section">
+    <div class="head"><span class="idx">01</span><h2>评测单</h2>
+      <span class="note">点击行进入报告 · 状态自动刷新</span></div>
+    <div class="card" style="padding:4px 6px"><table>
+      <thead><tr><th>Skill</th><th>状态</th><th>判定</th><th>Δ（Skill−裸考）</th><th>成本比</th><th>run 数</th><th>提交时间</th></tr></thead>
+      <tbody id="eval-list"></tbody>
+    </table></div>
+  </div>
+</section>
+
+<!-- ==================== 详情：状态机 + 报告 ==================== -->
+<section id="v-detail" class="view">
+  <div class="detail-back"><button class="btn ghost" onclick="go('home')">← 返回评测单</button></div>
+  <div id="detail-body"></div>
+</section>
+
+<div class="footer">
+  <span class="mono">skill-bench</span>
+  <span>判分全部机器完成（隐藏 pytest）· 安慰剂臂排除长度效应 · 归因阳性过 κ 门前标「待复核」</span>
+</div>
+</div>
+
+<script>
+/* ================= 数据层：API 在线（server.py）+ 离线快照兜底 =================
+   数据流：POST /api/evals → skills/incoming/ → eval_skill 流水线 →
+   results/eval-XXX/status.json（状态机）+ verdict.json（判定）→ 前端轮询 */
+/* API 基址自适应：从 API 服务器(18080)打开用相对路径；
+   从其他源打开（如 WorkBuddy 静态预览 12625）显式指向 18080——否则相对路径打到错误的源上就是 failed to fetch */
+const API = location.port === "18080" ? "" : "http://127.0.0.1:18080";
+let EVALS = [
+  { id: "demo-streamkit", name: "streamkit-convention（演示）", status: "done", decision: "confirmed-positive",
+    verdict: "正收益：Skill 臂均分 0.818 vs 裸考 0.455（Δ+0.364），安慰剂≡裸考排除长度效应。",
+    signal: "5/5", cost_ratio: 1.31, runs: 15, at: "10-04 16:47", stage: "done", channel: "ok",
+    arms: {"A0":{mean_score:0.455,mean_turns:11,mean_out_tok:1240,n_valid:5,n_total:5},
+           "A0p":{mean_score:0.455,mean_turns:12,mean_out_tok:1310,n_valid:5,n_total:5},
+           "A1f-conv":{mean_score:0.818,mean_turns:8,mean_out_tok:2481,n_valid:5,n_total:5}} },
+];
+
+const $ = s => document.querySelector(s);
+const DECISION_LABEL = { "confirmed-positive": ["正收益","g"], "out": ["出局","r"],
+  "weak": ["偏弱","a"], "suspect": ["模糊","a"], "dev-stop": ["自检","b"],
+  "out-cost-anomaly": ["出局·成本异常","r"], "pool-exhausted": ["池枯竭","a"], "decisive-positive": ["决定性正","g"],
+  "standard-positive": ["standard确诊","g"], "standard-inconclusive": ["确诊未复现","a"],
+  "decisive-negative": ["带头上负","r"], "decisive-null": ["饱和坐实","r"], "": ["—","b"] };
+
+function pillFor(e) {
+  if (e.status === "running") return `<span class="pill run">${e.stage || "评测中"}</span>`;
+  if (e.status === "stopped") return `<span class="pill a">已停止</span>`;
+  if (e.status === "failed") return `<span class="pill r">失败</span>`;
+  const [t, c] = DECISION_LABEL[e.decision] || DECISION_LABEL[""];
+  return `<span class="pill ${c}">${t}</span>`;
+}
+
+async function loadList() {
+  try {
+    const r = await fetch(API + "/api/evals");
+    if (!r.ok) throw 0;
+    const d = await r.json();
+    if (d.evals && d.evals.length) EVALS = d.evals;
+  } catch (e) { /* 离线快照兜底 */ }
+  renderList();
+  if (EVALS.some(e => e.status === "running")) setTimeout(loadList, 8000);
+}
+
+function renderList() {
+  $("#eval-list").innerHTML = EVALS.map(e => `<tr onclick="openDetail('${e.id}')">
+    <td class="mono">${e.name}</td>
+    <td>${pillFor(e)}${e.status === "running" ? ` <button class="btn ghost" style="padding:2px 10px;font-size:11px" onclick="event.stopPropagation();stopEval('${e.id}')">■ 停止</button>` : ""}</td>
+    <td style="color:var(--text-2)">${e.verdict ? e.verdict.slice(0, 20) + "…" : (e.reason || "—")}</td>
+    <td class="mono" style="color:${e.decision==="confirmed-positive"?"var(--green)":"var(--text-2)"};font-weight:600">${e.signal || "—"}</td>
+    <td class="mono">${e.cost_ratio ? "×" + e.cost_ratio : "—"}</td>
+    <td class="mono">${e.runs || "—"}</td>
+    <td class="mono" style="color:var(--text-3)">${(e.at || "").slice(5)}</td></tr>`).join("");
+}
+
+const STAGE_ORDER = ["预检", "冒烟", "分诊", "聚合", "done"];
+function stageIndex(st) {
+  if (!st) return 0;
+  if (st.startsWith("决定性") || st === "聚合") return 3;
+  const i = STAGE_ORDER.indexOf(st);
+  return i < 0 ? 2 : i;
+}
+
+async function openDetail(id) {
+  let e = EVALS.find(x => x.id === id) || { id, name: id, status: "running" };
+  try {
+    const r = await fetch(API + "/api/evals/" + encodeURIComponent(id));
+    if (r.ok) e = { ...e, ...(await r.json()) };
+  } catch (err) { /* 快照兜底 */ }
+
+  const cur = e.status === "done" ? 4 : stageIndex(e.stage);
+  const steps = ["预检", "冒烟", "分诊", "决定性", "报告"].map((s, i) => {
+    const cls = i < cur ? "done" : (i === cur ? (e.status === "running" ? "now" : "done") : "");
+    return `<div class="pstep ${cls}"><div class="knob"></div><div class="nm">${s}</div>
+      <div class="tm">${i < cur || e.status !== "running" ? "✓" : "…"}</div></div>`;
+  }).join("");
+
+  /* §1 判定：有没有用 / 多大用 / 代价 */
+  let verdictHtml = "";
+  if (e.status === "done") {
+    const cls = e.decision === "confirmed-positive" || e.decision === "decisive-positive" ? "g"
+      : (e.decision === "suspect" || e.decision === "pool-exhausted" ? "a" : "r");
+    const titleMap = { "confirmed-positive": "正收益 — 值得深测", "decisive-positive": "决定性为正",
+      "out": "零增益", "out-cost-anomaly": "零增益且成本异常", "suspect": "信号模糊",
+      "decisive-null": "饱和判定坐实", "decisive-negative": "带头上负信号",
+      "pool-exhausted": "池故障", "weak": "复测后增益仍弱", "dev-stop": "管线自检" };
+    verdictHtml = `<div class="verdict ${cls}">
+      <div class="lbl">① 判定：有没有用 · 多大用 · 代价是什么</div>
+      <h2>${titleMap[e.decision] || e.decision || "见判定"}</h2><p>${e.verdict || ""}</p></div>`;
+  } else if (e.status === "failed") {
+    verdictHtml = `<div class="verdict r"><div class="lbl">失败</div>
+      <h2>${e.reason || "流水线失败"}</h2><p>查 results/${e.id}/eval.log</p></div>`;
+  } else if (e.status === "stopped") {
+    verdictHtml = `<div class="verdict a"><div class="lbl">已停止</div><h2>任务已被用户停止</h2></div>`;
+  } else {
+    verdictHtml = `<div class="verdict a"><div class="lbl">评测中</div>
+      <h2>正在跑「${e.stage}」…</h2>
+      <p>渠道健康：${e.channel || "—"}。页面每 8s 自动刷新。</p>
+      <button class="btn ghost" style="margin-top:12px" onclick="stopEval('${e.id}')">■ 停止任务</button>
+      <span id="stop-status" style="margin-left:10px;font-size:13px"></span></div>`;
+    setTimeout(() => { if (document.querySelector("#v-detail").classList.contains("active")) openDetail(id); }, 8000);
+  }
+
+  const statsHtml = e.status === "done" ? `<div class="grid c4" style="margin-top:18px">
+    <div class="card stat"><div class="big ${e.decision && e.decision.includes("positive") ? "g" : ""}">${e.signal || "—"}</div><div class="lb">逐任务配对正符号</div></div>
+    <div class="card stat"><div class="big">${e.cost_ratio ? "×" + e.cost_ratio : "—"}</div><div class="lb">代价（成本比）</div></div>
+    <div class="card stat"><div class="big">${e.runs || "—"}</div><div class="lb">run 数（渠道死已剔除）</div></div>
+    <div class="card stat"><div class="big g">0</div><div class="lb">沙箱越界访问</div></div>
+  </div>` : "";
+
+  const arms = e.arms || {};
+  const armKeys = Object.keys(arms);
+  const armsHtml = armKeys.length ? `<div class="section">
+    <div class="head"><span class="idx">②</span><h2>分臂对照（消融：不加载差多少）</h2>
+      <span class="note">A0=不加载 · A0p=安慰剂 · A1f=加载</span></div>
+    <div class="card">${armKeys.map(k => { const a = arms[k]; const s = a.mean_score || 0;
+      return `<div class="armrow">
+      <span class="arm">${k}</span><div class="bar" style="flex:1"><i class="${s >= 0.8 ? "g" : ""}" style="width:${s * 100}%"></i></div>
+      <span class="sc" style="color:${s >= 0.8 ? "var(--green)" : "var(--text)"}">${s.toFixed(3)}</span>
+      <span class="mono" style="color:var(--text-3);width:150px;text-align:right">${a.n_valid}/${a.n_total} 有效 · ${Math.round(a.mean_turns)} 轮 · ${Math.round(a.mean_out_tok)} tok</span>
+    </div>`; }).join("")}</div></div>` : "";
+
+  /* §2~§6 完成后才加载的模块（任务下钻/弊端/改进/再验证） */
+  let flowHtml = "";
+  if (e.status === "done") {
+    flowHtml = `
+    <div class="section"><div class="head"><span class="idx">③</span><h2>任务级下钻</h2>
+      <span class="note">点 run 看 Trace（可观测性）</span></div>
+      <div class="card" style="padding:4px 6px"><table id="task-table"><thead>
+        <tr><th>任务</th><th>A0 裸考</th><th>A1f 加载</th><th>Δ</th><th>轮次(A0→A1f)</th><th>Trace</th></tr>
+      </thead><tbody><tr><td colspan="6" style="color:var(--text-3)">加载中…</td></tr></tbody></table></div>
+      <div id="trace-panel" style="display:none;margin-top:12px"></div>
+    </div>
+    <div class="section"><div class="head"><span class="idx">④</span><h2>弊端定位：哪条规则最有害</h2>
+      <span class="note">辅助 LLM 定性结论 · κ 门水印：待复核</span></div>
+      <div id="offense-box"><button class="btn" onclick="runAnalyze('${e.id}')">开始弊端分析（约 1~2 分钟）</button></div>
+    </div>
+    <div class="section" id="improve-section" style="display:none"><div class="head"><span class="idx">⑤</span><h2>改进方案（有依据地修改）</h2></div>
+      <div id="improve-box"></div>
+    </div>
+    <div class="section"><div class="head"><span class="idx">⑥</span><h2>再验证 / 继续测评</h2>
+      <span class="note">改完再跑一遍验证修改是否有效——题目闭环</span></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn ghost" onclick="continueEval('${e.id}','quick')">quick 48（备选）</button>
+        <button class="btn" onclick="continueEval('${e.id}','standard')">standard 全程（默认）</button>
+        <button class="btn ghost" onclick="continueEval('${e.id}','quick-lite')">quick-lite（备选）</button>
+      </div>
+      <div id="cont-status" style="margin-top:10px;font-size:13px"></div>
+    </div>
+    <div class="section"><div class="head"><span class="idx">⑦</span><h2>判定依据（预登记规则）</h2></div>
+      <div class="codeblock">判定规则先于数据写死，不看结果改规则：
+${e.decision === "confirmed-positive" || e.decision === "decisive-positive"
+? "✓ 裸考 ≤ 0.6（真知识缺口）\n✓ 安慰剂 ≡ 裸考（|Δ|≤0.15，长度效应排除）\n✓ Skill 臂 ≥ 裸考 + 0.2（显著增益）\n✓ 渠道死 < 25%（非降级窗口）\n✓ 沙箱越界 = 0（无作弊通道）"
+: e.decision === "out" || e.decision === "out-cost-anomaly"
+? "✗ 增益方向不明显（逐任务配对符号 ≤ 1/6 为正）\n✓ 成本比 ∈ [0.8, 1.5]（无异常开销）\n→ 分诊出局 ≠「证明无效」，=「本任务池上看不到值得深测的信号」"
+: "零信号 + 池天花板 → 决定性模式：候选探针 → 带头/兜底题 × A0/A1f × n=4 → 方向判定（判词自带统计限制括号）"}</div></div>`;
+  }
+
+  $("#detail-body").innerHTML = `
+    <h1 style="font-size:26px;letter-spacing:-.5px" class="mono">${e.name}</h1>
+    <div class="pipeline">${steps}</div>
+    ${e.pool ? `<div style="color:var(--text-3);font-size:11px;margin-top:4px">任务池：${e.pool.version}（D1×${e.pool.by_diff.D1} D2×${e.pool.by_diff.D2} D3×${e.pool.by_diff.D3}，含真实 issue ${e.pool.mined_real}）</div>` : ""}
+    ${verdictHtml}${statsHtml}${armsHtml}${flowHtml}`;
+  go("detail");
+  if (e.status === "done") loadTaskTable(id);
+}
+
+async function loadTaskTable(id) {
+  try {
+    const r = await fetch(API + "/api/evals/" + encodeURIComponent(id) + "/tasks");
+    const d = await r.json();
+    const tb = document.querySelector("#task-table tbody");
+    if (!tb) return;
+    tb.innerHTML = d.tasks.map(t => {
+      const dCls = t.delta > 0.1 ? "var(--green)" : (t.delta < -0.1 ? "var(--red)" : "var(--text-2)");
+      const a1runs = (t.runs.A1f || []);
+      const a0runs = (t.runs.A0 || []);
+      const tr = a1runs[0] || a0runs[0] || "";
+      const batch = (t.runs.A1f && t.runs.A1f.length ? "" : "") ;
+      return `<tr>
+        <td class="mono">${t.task}</td>
+        <td class="mono">${t.a0_score ?? "—"}</td>
+        <td class="mono">${t.a1f_score ?? "—"}</td>
+        <td class="mono" style="color:${dCls};font-weight:700">${t.delta !== null ? (t.delta > 0 ? "+" : "") + t.delta : "—"}</td>
+        <td class="mono" style="color:var(--text-3)">${t.a0_turns ?? "—"} → ${t.a1f_turns ?? "—"}</td>
+        <td>${tr ? `<button class="btn ghost" style="padding:2px 10px;font-size:11px" onclick="viewTrace('${id}','${tr}')">查看</button>` : "—"}</td>
+      </tr>`;
+    }).join("") || '<tr><td colspan="6">无任务数据</td></tr>';
+  } catch (e) { /* 静默 */ }
+}
+
+async function viewTrace(evalId, runId) {
+  const el = document.getElementById("trace-panel");
+  el.style.display = "block";
+  el.innerHTML = '<div class="card"><span class="pill run">加载中</span> 读取 trace…</div>';
+  const m = runId.match(/^(.*?)-(A0p?|A1f(?:-[a-z0-9]+)?)-r\d+$/);
+  const taskPrefix = m ? m[1] : "";
+  try {
+    const d0 = await (await fetch(API + "/api/evals/" + encodeURIComponent(evalId) + "/tasks")).json();
+    let batch = "", found = runId;
+    outer: for (const t of d0.tasks) {
+      for (const armRuns of Object.values(t.runs)) {
+        for (const rn of armRuns) {
+          if (rn === runId) { batch = t.batch || ""; break outer; }
+        }
+      }
+    }
+    // 从 run 所在批目录名推：evallite/evaldecisive-<name>-<stamp>
+    const r2 = await fetch(API + "/api/trace?batch=" + encodeURIComponent(batch || "") + "&run=" + encodeURIComponent(runId));
+    if (!r2.ok) throw new Error("trace 读取失败（批次目录取舍中）");
+    const d = await r2.json();
+    el.innerHTML = `<div class="card"><b class="mono">${runId}</b> 的事件流（末 ${d.events.length} 条）：
+      <div class="codeblock" style="margin-top:8px">${d.events.map(ev =>
+        `#${ev.idx} [${ev.kind}] ${ev.text}${ev.output ? "\n  → " + ev.output.slice(0, 120) : ""}`).join("\n\n")}</div></div>`;
+  } catch (e2) {
+    el.innerHTML = `<div class="card"><span class="pill r">失败</span> ${e2.message}（trace 文件在 results/&lt;批次&gt;/work/${runId}/trace.json）</div>`;
+  }
+}
+
+async function runAnalyze(evalId) {
+  const el = document.getElementById("offense-box");
+  el.innerHTML = '<span class="pill run">分析中</span> 规则提取 → 弊端排序 → 改进版生成（辅助 LLM，1~2 分钟）…';
+  try {
+    const r = await fetch(API + "/api/evals/" + encodeURIComponent(evalId) + "/analyze", { method: "POST" });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || "分析失败");
+    const sevColor = { "高": "r", "中": "a", "低": "b" };
+    el.innerHTML = `<div class="card">
+      <div style="margin-bottom:10px;color:var(--text-2)"><b>核心问题：</b>${d.overall || "—"}</div>
+      ${(d.offenders || []).map((o, i) => `<div class="armrow">
+        <span class="pill ${sevColor[o.severity] || "b"}" style="width:34px;text-align:center">${o.severity}</span>
+        <div style="flex:1"><b>#${i + 1} ${o.id}</b>｜${o.rule}
+          <div class="sub" style="color:var(--text-3);font-size:12px">证据：${o.evidence}</div>
+          <div class="sub" style="color:var(--green);font-size:12px">改法：${o.fix}</div></div>
+      </div>`).join("")}
+      <div style="margin-top:8px;font-size:11px;color:var(--text-3)">⚠ ${d.watermark}</div>
+    </div>`;
+    if (d.improved) {
+      const sec = document.getElementById("improve-section");
+      sec.style.display = "block";
+      document.getElementById("improve-box").innerHTML = `<div class="card">
+        <div class="sub" style="margin-bottom:8px">改进版 SKILL.md（${d.improved.length} 字符，原版的 ${Math.round(d.improved.length / 7000 * 100)}%±）：</div>
+        <div class="codeblock" style="max-height:220px">${d.improved.slice(0, 3000)}${d.improved.length > 3000 ? "\n…（截断预览）" : ""}</div>
+        <button class="btn" style="margin-top:10px" onclick="submitImproved('${d.skill || ""}', '${evalId}')">评测改进版（验证修改是否有效）</button>
+        <span id="imp-status" style="margin-left:10px;font-size:13px"></span>
+      </div>`;
+      window._improved = { name: d.skill.split("/").pop().replace(/-\d{4}-\d{6}$/, "") + "-improved", content: d.improved };
+    }
+  } catch (e2) {
+    el.innerHTML = `<span class="pill r">失败</span> ${e2.message}`;
+  }
+}
+
+function submitImproved(skillPath, evalId) {
+  if (!window._improved) return;
+  const el = document.getElementById("imp-status");
+  el.textContent = "提交中…";
+  submitContent(window._improved.name, window._improved.content, () => {
+    el.textContent = "已受理——新评测单（改进版）将出现在列表顶部，跑完与原版对比";
+    setTimeout(() => { go("home"); loadList(); }, 2500);
+  });
+}
+
+function go(v) {
+  document.querySelectorAll(".view").forEach(x => x.classList.remove("active"));
+  $("#v-" + v).classList.add("active");
+  window.scrollTo({ top: 0 });
+}
+
+/* ---------- 提交与 GitHub 拉取（每个等待点都有步骤反馈） ---------- */
+let fetchedSkill = null;
+
+function ghStatus(html, kind) {
+  const el = document.getElementById("gh-status");
+  el.style.display = "block";
+  const border = kind === "err" ? "rgba(248,113,113,.4)" : (kind === "ok" ? "rgba(52,211,153,.4)" : "var(--line)");
+  el.innerHTML = '<div class="card" style="padding:12px 16px;font-size:13px;border-color:' + border + '">' + html + "</div>";
+}
+
+function showReadyCard(name, size, note, preview) {
+  /* 统一就绪卡：所有入口（GitHub/文件/粘贴）汇到这里——先选档再开始 */
+  const html = '<span class="pill g">就绪</span> <b>' + name + '</b>（' + size + '）' + (note ? ' · ' + note : '')
+    + (preview ? '<div class="codeblock" style="margin-top:8px;max-height:80px">' + preview + '</div>' : '')
+    + '<div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">'
+    + '<span style="color:var(--text-3);font-size:12px">选择档位：</span>'
+    + '<select id="tier-sel" style="background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:9px;padding:7px 12px;font:600 12px var(--sans)">'
+    + '<option value="standard" selected>standard 全程（默认，~30-60分钟）</option>'
+    + '<option value="quick">quick 48（备选，~15-25分钟）</option>'
+    + '<option value="quick-lite">quick-lite 分诊（备选，~10分钟）</option>'
+    + '</select>'
+    + '<button class="btn" onclick="startFetched()">开始评测 ' + name + '</button>'
+    + '</div>';
+  ghStatus(html, "ok");
+}
+
+function fetchGitHub() {
+  const url = document.getElementById("gh-url").value.trim();
+  if (!url) return;
+  const btn = document.getElementById("gh-btn");
+  btn.disabled = true; btn.textContent = "拉取中…";
+  ghStatus('<span class="pill run">进行中</span> 解析网址 → 直连拉取 → 校验内容…');
+  fetch(API + "/api/fetch-skill", { method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url }) })
+    .then(async r => {
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.detail || "拉取失败");
+      fetchedSkill = { name: d.name, content: d.content };
+      const preview = d.content.split("\n").slice(0, 3).map(l => l.slice(0, 80)).join("\n");
+      showReadyCard(d.name, d.size + " 字节", (d.steps || []).join(" → "), preview);
+    })
+    .catch(e => ghStatus('<span class="pill r">失败</span> ' + e.message, "err"))
+    .finally(() => { btn.disabled = false; btn.textContent = "拉取 Skill"; });
+}
+
+function startFetched() {
+  if (!fetchedSkill) return;
+  ghStatus('<span class="pill run">提交中</span> 创建评测单 → 启动流水线…', "ok");
+  submitContent(fetchedSkill.name, fetchedSkill.content, () => {
+    ghStatus('<span class="pill g">已受理</span> 评测单已创建，流水线启动——下方列表 3 秒后刷新，点行进状态机。', "ok");
+    setTimeout(() => { async function checkApi() {
+  const b = document.getElementById("api-badge");
+  const target = (API || location.origin) + "/api/evals";
+  const ctrl = new AbortController();
+  const killer = setTimeout(() => ctrl.abort(), 4000);   // 4s 超时——永不挂死在"连接中"
+  try {
+    const r = await fetch(target, { cache: "no-store", signal: ctrl.signal });
+    clearTimeout(killer);
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    b.className = "pill g"; b.textContent = "API 已连接"; b.title = target;
+    b.style.cursor = "default";
+  } catch (e) {
+    clearTimeout(killer);
+    b.className = "pill r"; b.textContent = "API 未连接";
+    b.title = "请求目标：" + target + "｜错误：" + (e.name === "AbortError" ? "超时(4s)——浏览器到 18080 的路被劫（查浏览器代理插件/防火墙）" : e.message)
+      + "｜点击重试；或在地址栏直接开 " + target + " 看是否转圈";
+    b.style.cursor = "pointer";
+    b.onclick = () => { b.className = "pill a"; b.textContent = "API 连接中…"; checkApi(); };
+  }
+}
+checkApi();
+loadList(); }, 2500);
+  });
+}
+
+function stopEval(id) {
+  if (!confirm("确认停止该评测单？（已完成的 run 保留，飞行中的容器自然收尾）")) return;
+  const el = document.getElementById("stop-status");
+  if (el) el.textContent = "停止中…";
+  fetch(API + "/api/evals/" + encodeURIComponent(id) + "/stop", { method: "POST" })
+    .then(r => r.json())
+    .then(() => { loadList(); setTimeout(loadList, 1500); })
+    .catch(() => { if (el) el.textContent = "停止失败"; });
+}
+
+function continueEval(id, tier) {
+  const el = document.getElementById("cont-status");
+  const label = { "quick": "quick 48", "standard": "standard 确诊", "quick-lite": "quick-lite" }[tier] || tier;
+  el.innerHTML = '<span class="pill run">受理中</span> 正在启动 ' + label + ' 流水线…';
+  fetch(API + "/api/evals/" + encodeURIComponent(id) + "/continue", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tier }) })
+    .then(async r => {
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.detail || "启动失败");
+      el.innerHTML = '<span class="pill g">已受理</span> ' + (d.note || "") + '——3 秒后回列表看新评测单';
+      setTimeout(() => { go("home"); loadList(); }, 3000);
+    })
+    .catch(e2 => { el.innerHTML = '<span class="pill r">失败</span> ' + e2.message; });
+}
+
+function submitContent(name, content, after) {
+  fetch(API + "/api/evals", { method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, content, dev: false, tier: (document.getElementById("tier-sel") || {}).value || "standard" }) })
+    .then(r => r.json()).then(() => { if (after) after(); else setTimeout(loadList, 3000); })
+    .catch(() => ghStatus('<span class="pill r">提交失败</span> API 未启动？', "err"));
+}
+function readSkillFile(f) {
+  if (!f) return;
+  ghStatus('<span class="pill run">读取中</span> ' + f.name + '…');
+  const rd = new FileReader();
+  rd.onload = () => {
+    fetchedSkill = { name: f.name.replace(/\.\w+$/, ""), content: rd.result };
+    showReadyCard(fetchedSkill.name, (f.size || rd.result.length) + " 字节", "本地文件", "");
+  };
+  rd.readAsText(f);
+}
+const fileInp = document.getElementById("file-inp");
+fileInp.addEventListener("change", () => { readSkillFile(fileInp.files[0]); fileInp.value = ""; });
+function demoSubmit() { fileInp.click(); }
+
+/* 真拖拽：dragover 高亮，drop 读取 */
+const dzEl = document.getElementById("dz");
+dzEl.addEventListener("dragover", ev => { ev.preventDefault(); dzEl.classList.add("over"); });
+dzEl.addEventListener("dragleave", () => dzEl.classList.remove("over"));
+dzEl.addEventListener("drop", ev => {
+  ev.preventDefault(); dzEl.classList.remove("over");
+  readSkillFile(ev.dataTransfer.files[0]);
+});
+dzEl.addEventListener("click", demoSubmit);
+
+document.querySelector(".paste-row input").addEventListener("keydown", ev => {
+  if (ev.key === "Enter" && ev.target.value.trim()) {
+    fetchedSkill = { name: "pasted-skill-" + Date.now() % 10000, content: ev.target.value };
+    ev.target.value = "";
+    showReadyCard(fetchedSkill.name, fetchedSkill.content.length + " 字符", "粘贴文本", "");
+  }
+});
+document.getElementById("gh-url").addEventListener("keydown", ev => {
+  if (ev.key === "Enter") fetchGitHub();
+});
+
+loadList();
+</script>
+
+</body>
+</html>

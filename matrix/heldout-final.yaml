@@ -1,0 +1,22 @@
+# matrix/heldout-final.yaml — A2 闭环终验（一次性，2026-09-29）
+# 规则：heldout 实例从未参与任何 dev 迭代；本批只跑一次定音，不迭代不补跑（死跑除外）。
+# 预登记判定（先于数据）：
+#   ① v3 通过率 ≥ A0（未见任务上无害）
+#   ② v3 通过率 ≥ v1（修订不退化）
+#   ③ v3 仪式卡死 = 0（"说写测试但修复未落地"）
+#   ④ v3 平均轮次 ≤ v1（方向）
+name: heldout-final
+description: "A0 / A1f-v1 / A1f-v3 × heldout 6 任务 × n=2 = 36 run（终验）"
+
+arms:
+  - { id: A0, inject: none }
+  - { id: A1f-v1, inject: forced, skill: skills/tdd-v1 }
+  - { id: A1f-v3, inject: forced, skill: skills/tdd-v3 }
+
+tasks:
+  source: tasks/heldout
+repeats: 2
+
+model: deepseek-v4.1-flash
+timeout_min: 12
+concurrency: 4
